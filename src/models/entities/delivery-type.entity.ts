@@ -25,8 +25,8 @@ export class DeliveryType {
   @Column({ type: 'float' })
   overpriced: number;
 
-  @Column({ type: 'float' })
-  deliveryHours: number;
+  @Column({ type: 'integer' })
+  deliveryDays: number;
 
   @CreateDateColumn({
     type: 'timestamp',

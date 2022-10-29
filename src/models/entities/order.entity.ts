@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { DeliveryType } from './delivery-type.entity';
 
@@ -36,9 +37,6 @@ export class Order {
   @Column({ type: 'float' })
   dimension: number;
 
-  @Column({ type: 'float' })
-  shipingFee: number;
-
   @Column({ type: 'datetime' })
   deliveryTime: Date;
 
@@ -52,12 +50,12 @@ export class Order {
   })
   updatedAt: Date;
 
-  @ManyToOne(() => OrderAddress, (orderAddress) => orderAddress.orders, {
+  @OneToOne(() => OrderAddress, (orderAddress) => orderAddress.order, {
     nullable: false,
   })
   @JoinColumn({
     name: 'orderAddressId',
-    foreignKeyConstraintName: 'fk-orders-order_address',
+    foreignKeyConstraintName: 'fk-order-order_address',
   })
   orderAddress: OrderAddress;
 

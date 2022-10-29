@@ -47,7 +47,7 @@ export class DeliveryTypeService {
     );
   }
 
-  async getDeliveryTypeById(id: number): Promise<DeliveryTypeDto> {
+  async getDeliveryTypeById(id: number): Promise<DeliveryType> {
     const firstDeliveryType = await this.deliveryTypeRepository.findOneBy({
       id: id,
     });
@@ -56,6 +56,6 @@ export class DeliveryTypeService {
       throw new NotFoundException('The delivery type id not found');
     }
 
-    return this.deliveryTypeConverter.toDto(firstDeliveryType);
+    return firstDeliveryType;
   }
 }

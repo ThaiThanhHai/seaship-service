@@ -1,8 +1,12 @@
+import { DeliveryTypeService } from './delivery-type.service';
 import { Injectable, Inject, Res } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { PythonService } from './python.service';
 import { Order } from '../models/entities/order.entity';
-import { Order as OrderDto } from '../controllers/dto/order.dto';
+import { OrderDto } from '../controllers/dto/order.dto';
+import { OrderConverter } from 'src/controllers/converters/order.converter';
+import { OrderAddressService } from './order-address.service';
+import { OrderAddressConverter } from 'src/controllers/converters/order-address.converter';
 
 @Injectable()
 export class OrderService {
@@ -10,10 +14,42 @@ export class OrderService {
     private readonly pythonService: PythonService,
     @Inject('ORDER_REPOSITORY')
     private orderRepository: Repository<Order>,
+    private deliveryTypeService: DeliveryTypeService,
+    private orderAddressService: OrderAddressService,
+    private readonly orderConverter: OrderConverter,
+    private readonly orderAddressConverter: OrderAddressConverter,
   ) {}
 
-  createOrder(order: OrderDto) {
-    return order;
+  async createOrder(orderDto: OrderDto) {
+    const today = new Date();
+    const orderEntity = this.orderConverter.toEntity(orderDto);
+
+    const firstDeliveryType =
+      await this.deliveryTypeService.getDeliveryTypeById(
+        orderDto.delivery_type_id,
+      );
+
+    orderEntity.deliveryTime = new Date(
+      today.setDate(today.getDate() + firstDeliveryType.deliveryDays),
+    );
+
+    const orderAddressEntity =
+      await this.orderAddressService.createOrderAddress(orderDto.order_address);
+
+    if (!orderAddressEntity) {
+      throw new Error('Invalid value');
+    }
+
+    orderEntity.orderAddress = orderAddressEntity;
+    orderEntity.deliveryType = firstDeliveryType;
+
+    const createdOrder = await this.orderRepository.save(orderEntity);
+
+    if (!createdOrder) {
+      await this.orderAddressService.deleteOrderAddress(orderAddressEntity.id);
+    }
+
+    return this.orderConverter.toDto(createdOrder);
   }
 
   deliverySchedule(@Res() res) {

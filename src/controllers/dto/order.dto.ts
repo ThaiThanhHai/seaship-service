@@ -1,15 +1,15 @@
-import { OrderAddress } from './order-address.dto';
+import { OrderAddressDto } from './order-address.dto';
 
-export interface Order {
+export interface OrderDto {
   readonly id: number;
-  name: string;
+  order_name: string;
   sender_name: string;
   sender_phone: string;
-  reciever_name: string;
-  reciever_phone: string;
+  receiver_name: string;
+  receiver_phone: string;
   weight: number;
   dimension: number;
-  delivery_time: string;
-  time_deviation: string;
-  order_address: OrderAddress;
+  delivery_time: Date;
+  delivery_type_id: number;
+  order_address: OrderAddressDto;
 }

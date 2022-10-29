@@ -4,7 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { Order } from './order.entity';
 
@@ -22,6 +22,9 @@ export class OrderAddress {
   @Column({ length: 255 })
   latitude: string;
 
+  @Column({ type: 'float' })
+  shippingFee: number;
+
   @CreateDateColumn({
     type: 'timestamp',
   })
@@ -32,6 +35,6 @@ export class OrderAddress {
   })
   updatedAt: Date;
 
-  @OneToMany(() => Order, (order) => order.orderAddress)
-  orders: Order[];
+  @OneToOne(() => Order, (order) => order.orderAddress)
+  order: Order;
 }
