@@ -3,5 +3,5 @@ export interface DeliveryTypeDto {
   price_inner: number;
   price_outer: number;
   overpriced: number;
-  delivery_hours: number;
+  delivery_days: number;
 }

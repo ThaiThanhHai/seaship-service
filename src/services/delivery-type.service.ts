@@ -34,7 +34,7 @@ export class DeliveryTypeService {
     const [listDeliveryTypes, count] =
       await this.deliveryTypeRepository.findAndCount({
         order: {
-          created_at: 'DESC',
+          createdAt: 'DESC',
         },
         skip: page,
         take: limit,

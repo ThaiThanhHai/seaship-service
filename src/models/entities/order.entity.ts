@@ -11,6 +11,12 @@ import {
 } from 'typeorm';
 import { DeliveryType } from './delivery-type.entity';
 
+export enum Status {
+  NEW = 'new',
+  DELIVERING = 'delivering',
+  FINISHED = 'finished',
+}
+
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
@@ -37,8 +43,18 @@ export class Order {
   @Column({ type: 'float' })
   dimension: number;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'date' })
   deliveryTime: Date;
+
+  @Column({ length: 255, nullable: true })
+  note: string;
+
+  @Column({
+    type: 'enum',
+    enum: Status,
+    default: Status.NEW,
+  })
+  status: Status;
 
   @CreateDateColumn({
     type: 'timestamp',

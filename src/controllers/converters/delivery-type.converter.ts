@@ -10,7 +10,7 @@ export class DeliveryTypeConverter {
     entity.priceInner = dto.price_inner;
     entity.priceOuter = dto.price_outer;
     entity.overpriced = dto.overpriced;
-    entity.deliveryDays = dto.delivery_hours;
+    entity.deliveryDays = dto.delivery_days;
     return entity;
   }
 
@@ -21,7 +21,7 @@ export class DeliveryTypeConverter {
       price_inner: entity.priceInner,
       price_outer: entity.priceOuter,
       overpriced: entity.overpriced,
-      delivery_hours: entity.deliveryDays,
+      delivery_days: entity.deliveryDays,
     } as DeliveryTypeDto;
 
     return dto;

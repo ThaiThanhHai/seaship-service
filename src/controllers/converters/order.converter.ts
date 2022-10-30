@@ -14,12 +14,14 @@ export class OrderConverter {
     entity.receiverName = dto.receiver_name;
     entity.receiverPhone = dto.receiver_phone;
     entity.weight = dto.weight;
+    entity.note = dto.note;
     entity.dimension = dto.dimension;
     return entity;
   }
 
   toDto(entity: Order) {
     const dto = {
+      id: entity.id,
       order_name: entity.orderName,
       sender_name: entity.senderName,
       sender_phone: entity.senderPhone,
@@ -27,6 +29,8 @@ export class OrderConverter {
       receiver_phone: entity.receiverPhone,
       weight: entity.weight,
       dimension: entity.dimension,
+      status: entity.status,
+      note: entity.note,
       delivery_time: entity.deliveryTime,
       order_address: this.orderAddressConverter.toDto(entity.orderAddress),
     } as OrderDto;

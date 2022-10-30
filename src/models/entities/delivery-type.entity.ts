@@ -31,12 +31,12 @@ export class DeliveryType {
   @CreateDateColumn({
     type: 'timestamp',
   })
-  created_at: Date;
+  createdAt: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
   })
-  updated_at: Date;
+  updatedAt: Date;
 
   @OneToMany(() => Order, (order) => order.deliveryType)
   orders: Order[];

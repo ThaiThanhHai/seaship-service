@@ -10,6 +10,8 @@ export interface OrderDto {
   weight: number;
   dimension: number;
   delivery_time: Date;
+  note: string;
+  status: string;
   delivery_type_id: number;
   order_address: OrderAddressDto;
 }

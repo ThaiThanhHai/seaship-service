@@ -16,6 +16,7 @@ import { DeliveryTypeListConverter } from './controllers/converters/delivery-typ
 import { OrderConverter } from './controllers/converters/order.converter';
 import { OrderAddressService } from './services/order-address.service';
 import { OrderAddressConverter } from './controllers/converters/order-address.converter';
+import { OrderListConverter } from './controllers/converters/order-list.converter';
 
 @Module({
   imports: [DatabaseModule],
@@ -38,6 +39,7 @@ import { OrderAddressConverter } from './controllers/converters/order-address.co
     OrderAddressConverter,
     OrderConverter,
     OrderAddressService,
+    OrderListConverter,
   ],
 })
 export class AppModule {}
