@@ -1,5 +1,5 @@
 import { DeliveryTypeService } from './delivery-type.service';
-import { Injectable, Inject, Res, NotFoundException } from '@nestjs/common';
+import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { Like, Raw, Repository } from 'typeorm';
 import { PythonService } from './python.service';
 import { Order } from '../models/entities/order.entity';
@@ -7,6 +7,8 @@ import { OrderDto } from '../controllers/dto/order.dto';
 import { OrderConverter } from 'src/controllers/converters/order.converter';
 import { OrderAddressService } from './order-address.service';
 import { OrderListConverter } from 'src/controllers/converters/order-list.converter';
+import { HttpService } from '@nestjs/axios/dist';
+import { lastValueFrom, map } from 'rxjs';
 
 @Injectable()
 export class OrderService {
@@ -18,20 +20,8 @@ export class OrderService {
     private orderAddressService: OrderAddressService,
     private readonly orderConverter: OrderConverter,
     private readonly orderListConverter: OrderListConverter,
+    private httpService: HttpService,
   ) {}
-
-  async getOrderById(id: number): Promise<OrderDto> {
-    const firstOrder = await this.orderRepository.findOne({
-      where: { id: id },
-      relations: ['orderAddress'],
-    });
-
-    if (!firstOrder) {
-      throw new NotFoundException('The order id not found');
-    }
-
-    return this.orderConverter.toDto(firstOrder);
-  }
 
   async createOrder(orderDto: OrderDto) {
     const today = new Date();
@@ -65,14 +55,52 @@ export class OrderService {
     return this.orderConverter.toDto(createdOrder);
   }
 
-  deliverySchedule(@Res() res) {
-    this.getCoordinates();
-    const coordinates = [
-      [10.045162, 105.746857],
-      [10.762622, 106.660172],
-      [10.086128, 106.016997],
-      [9.812741, 106.299291],
-    ];
+  async getOrders(query) {
+    let page = 0;
+    let limit = 6;
+    if (query['page'] && query['limit']) {
+      limit = query['limit'];
+      page = (query['page'] - 1) * limit;
+    }
+
+    const search = query['search'] ? query['search'] : '';
+    const [orders, count] = await this.orderRepository.findAndCount({
+      where: {
+        orderName: Like(`%${search}%`),
+      },
+      relations: ['orderAddress'],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip: page,
+      take: limit,
+    });
+
+    return this.orderListConverter.toDto(page, limit, count, orders);
+  }
+
+  async getOrderById(id: number): Promise<OrderDto> {
+    const firstOrder = await this.orderRepository.findOne({
+      where: { id: id },
+      relations: ['orderAddress'],
+    });
+
+    if (!firstOrder) {
+      throw new NotFoundException('The order id not found');
+    }
+
+    return this.orderConverter.toDto(firstOrder);
+  }
+
+  async schedule(res) {
+    const data = await this.getCoordinates();
+    const coordinates = data.coordinates;
+    // const coordinates = [
+    //   [10.045162, 105.746857],
+    //   [10.762622, 106.660172],
+    //   [10.086128, 106.016997],
+    //   [9.812741, 106.299291],
+    // ];
     const num_vehicles = 4;
     const depot = 0;
     const weight = 100;
@@ -109,36 +137,26 @@ export class OrderService {
 
     const coordinates = [];
     orders.map((item) => {
-      // console.log([item.orderAddress.latitude, item.orderAddress.longitude]);
       coordinates.push([
-        item.orderAddress.latitude,
-        item.orderAddress.longitude,
+        parseFloat(item.orderAddress.latitude),
+        parseFloat(item.orderAddress.longitude),
       ]);
     });
     return { coordinates, count };
   }
 
-  async getOrders(query) {
-    let page = 0;
-    let limit = 6;
-    if (query['page'] && query['limit']) {
-      limit = query['limit'];
-      page = (query['page'] - 1) * limit;
-    }
+  async deliverySchedule(): Promise<number> {
+    const media = this.httpService.get(
+      'http://localhost:3000/api/v1/orders/schedule',
+    );
+    const response = media.pipe(
+      map((res) => {
+        return res.data;
+      }),
+    );
+    const result = await lastValueFrom(response);
+    console.log(result);
 
-    const search = query['search'] ? query['search'] : '';
-    const [orders, count] = await this.orderRepository.findAndCount({
-      where: {
-        orderName: Like(`%${search}%`),
-      },
-      relations: ['orderAddress'],
-      order: {
-        createdAt: 'DESC',
-      },
-      skip: page,
-      take: limit,
-    });
-
-    return this.orderListConverter.toDto(page, limit, count, orders);
+    return result;
   }
 }

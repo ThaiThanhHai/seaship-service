@@ -7,9 +7,19 @@ import { OrderDto } from '../controllers/dto/order.dto';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Get()
+  @Get('')
   public getOrders(@Query() query) {
     return this.orderService.getOrders(query);
+  }
+
+  @Get('delivery-schedule')
+  deliverySchedule() {
+    return this.orderService.deliverySchedule();
+  }
+
+  @Get('schedule')
+  schedule(@Res() res) {
+    return this.orderService.schedule(res);
   }
 
   @Get(':id')
@@ -19,12 +29,6 @@ export class OrderController {
 
   @Post('')
   createOrder(@Body() orderDto: OrderDto) {
-    console.log(orderDto);
     return this.orderService.createOrder(orderDto);
-  }
-
-  @Get('schedule')
-  deliverySchedule(@Res() res) {
-    return this.orderService.deliverySchedule(res);
   }
 }

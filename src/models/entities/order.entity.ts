@@ -15,6 +15,7 @@ export enum Status {
   NEW = 'new',
   DELIVERING = 'delivering',
   FINISHED = 'finished',
+  ERROR = 'error',
 }
 
 @Entity()

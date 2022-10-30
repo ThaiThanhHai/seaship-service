@@ -17,9 +17,10 @@ import { OrderConverter } from './controllers/converters/order.converter';
 import { OrderAddressService } from './services/order-address.service';
 import { OrderAddressConverter } from './controllers/converters/order-address.converter';
 import { OrderListConverter } from './controllers/converters/order-list.converter';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, HttpModule],
   controllers: [
     AppController,
     DeliveryTypeController,
