@@ -12,8 +12,8 @@ export class DeliveryTypeController {
   }
 
   @Get('')
-  getDeliveryTypes() {
-    return this.deliveryTypeService.getDeliveryTypes();
+  getListOfDeliveryType() {
+    return this.deliveryTypeService.getListOfDeliveryType();
   }
 
   @Get(':id')

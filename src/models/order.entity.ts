@@ -8,8 +8,11 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
+  OneToMany,
 } from 'typeorm';
 import { DeliveryType } from './delivery-type.entity';
+import { Schedule } from './schedule.entity';
+import { Cargo } from './cargo.entity';
 
 export enum Status {
   NEW = 'new',
@@ -24,28 +27,22 @@ export class Order {
   id: number;
 
   @Column({ length: 255 })
-  orderName: string;
+  sender_name: string;
 
   @Column({ length: 255 })
-  senderName: string;
+  sender_phone: string;
 
   @Column({ length: 255 })
-  senderPhone: string;
+  receiver_name: string;
 
   @Column({ length: 255 })
-  receiverName: string;
-
-  @Column({ length: 255 })
-  receiverPhone: string;
-
-  @Column({ type: 'float' })
-  weight: number;
-
-  @Column({ type: 'float' })
-  dimension: number;
+  receiver_phone: string;
 
   @Column({ type: 'date' })
-  deliveryTime: Date;
+  delivery_time: Date;
+
+  @Column({ type: 'float' })
+  shipping_fee: number;
 
   @Column({ length: 255, nullable: true })
   note: string;
@@ -60,28 +57,40 @@ export class Order {
   @CreateDateColumn({
     type: 'timestamp',
   })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
   @OneToOne(() => OrderAddress, (orderAddress) => orderAddress.order, {
     nullable: false,
   })
   @JoinColumn({
-    name: 'orderAddressId',
+    name: 'order_address_id',
     foreignKeyConstraintName: 'fk-order-order_address',
   })
-  orderAddress: OrderAddress;
+  order_address: OrderAddress;
+
+  @OneToOne(() => Cargo, (cargo) => cargo.order, {
+    nullable: false,
+  })
+  @JoinColumn({
+    name: 'cargo_id',
+    foreignKeyConstraintName: 'fk-order-cargo',
+  })
+  cargo: Cargo;
 
   @ManyToOne(() => DeliveryType, (deliveryType) => deliveryType.orders, {
     nullable: false,
   })
   @JoinColumn({
-    name: 'deliveryTypeId',
+    name: 'delivery_type_id',
     foreignKeyConstraintName: 'fk-orders-delivery_type',
   })
-  deliveryType: DeliveryType;
+  delivery_type: DeliveryType;
+
+  @OneToMany(() => Schedule, (schedule) => schedule.shippers)
+  schedule: Schedule[];
 }

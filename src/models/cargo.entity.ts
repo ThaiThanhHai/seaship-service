@@ -4,12 +4,19 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { Order } from './order.entity';
 
+export enum Status {
+  NEW = 'new',
+  DELIVERING = 'delivering',
+  FINISHED = 'finished',
+  ERROR = 'error',
+}
+
 @Entity()
-export class DeliveryType {
+export class Cargo {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -17,27 +24,21 @@ export class DeliveryType {
   name: string;
 
   @Column({ type: 'float' })
-  priceInner: number;
+  weight: number;
 
   @Column({ type: 'float' })
-  priceOuter: number;
-
-  @Column({ type: 'float' })
-  overpriced: number;
-
-  @Column({ type: 'integer' })
-  deliveryDays: number;
+  dimension: number;
 
   @CreateDateColumn({
     type: 'timestamp',
   })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
-  @OneToMany(() => Order, (order) => order.deliveryType)
-  orders: Order[];
+  @OneToOne(() => Order, (order) => order.cargo)
+  order: Order;
 }

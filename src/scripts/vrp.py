@@ -62,8 +62,6 @@ def main():
     # ]
     # num_vehicles = 4
     # depot = 0
-    # weight = 100
-    # dimension = 50
 
     distance_matrix = calculate_distance_matrix(coordinates)
 

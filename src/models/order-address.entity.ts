@@ -22,19 +22,16 @@ export class OrderAddress {
   @Column({ length: 255 })
   latitude: string;
 
-  @Column({ type: 'float' })
-  shippingFee: number;
-
   @CreateDateColumn({
     type: 'timestamp',
   })
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn({
     type: 'timestamp',
   })
-  updatedAt: Date;
+  updated_at: Date;
 
-  @OneToOne(() => Order, (order) => order.orderAddress)
+  @OneToOne(() => Order, (order) => order.order_address)
   order: Order;
 }

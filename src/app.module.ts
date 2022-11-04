@@ -1,46 +1,59 @@
+import { ScheduleService } from 'src/services/schedule.service';
+import { ScheduleController } from './controllers/schedule.controller';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { DatabaseModule } from './models/databases/database.module';
 import { OrderController } from './controllers/order.controller';
 import { DeliveryTypeController } from './controllers/delivery-type.controller';
-import { OrderAddressController } from './controllers/order-address.controller';
-import { orderProviders } from './models/providers/order.provider';
-import { orderAddressProviders } from './models/providers/order-address.provider';
-import { deliveryTypeProviders } from './models/providers/delivery-type.provider';
 import { OrderService } from './services/order.service';
 import { DeliveryTypeService } from './services/delivery-type.service';
 import { PythonService } from './services/python.service';
-import { DeliveryTypeConverter } from './controllers/converters/delivery-type.converter';
-import { DeliveryTypeListConverter } from './controllers/converters/delivery-type-list.converter';
-import { OrderConverter } from './controllers/converters/order.converter';
-import { OrderAddressService } from './services/order-address.service';
-import { OrderAddressConverter } from './controllers/converters/order-address.converter';
-import { OrderListConverter } from './controllers/converters/order-list.converter';
 import { HttpModule } from '@nestjs/axios';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { ShipperController } from './controllers/shipper.controller';
+import { ShipperService } from './services/shipper.service';
+import { PythonController } from './controllers/python.controller';
 
 @Module({
-  imports: [DatabaseModule, HttpModule],
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '../resources'),
+      serveRoot: '/resources',
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: () => ({
+        type: 'mysql',
+        host: 'localhost',
+        port: 3306,
+        username: 'root',
+        password: 'password',
+        database: 'seaship_dev',
+        entities: [`dist/models/*{.ts,.js}`],
+        autoLoadEntities: true,
+        synchronize: false,
+      }),
+    }),
+    HttpModule,
+  ],
   controllers: [
     AppController,
     DeliveryTypeController,
-    OrderAddressController,
     OrderController,
+    ShipperController,
+    ScheduleController,
+    PythonController,
   ],
   providers: [
     AppService,
-    ...orderProviders,
-    ...orderAddressProviders,
-    ...deliveryTypeProviders,
-    OrderService,
     DeliveryTypeService,
+    OrderService,
     PythonService,
-    DeliveryTypeConverter,
-    DeliveryTypeListConverter,
-    OrderAddressConverter,
-    OrderConverter,
-    OrderAddressService,
-    OrderListConverter,
+    ShipperService,
+    ScheduleService,
   ],
 })
 export class AppModule {}

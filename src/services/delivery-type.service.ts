@@ -1,54 +1,63 @@
-import { DeliveryType } from './../models/entities/delivery-type.entity';
+import { DeliveryType } from './../models/delivery-type.entity';
 import { DeliveryTypeDto } from './../controllers/dto/delivery-type.dto';
-import { Injectable, Inject, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { DeliveryTypeConverter } from './../controllers/converters/delivery-type.converter';
-import { DeliveryTypeListConverter } from './../controllers/converters/delivery-type-list.converter';
-import { DeliveryTypeListDto } from 'src/controllers/dto/delivery-type-list.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
+import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class DeliveryTypeService {
   constructor(
-    @Inject('DELIVERY_TYPE_REPOSITORY')
-    private deliveryTypeRepository: Repository<DeliveryType>,
-    private readonly deliveryTypeConverter: DeliveryTypeConverter,
-    private readonly deliveryTypeListConverter: DeliveryTypeListConverter,
+    @InjectDataSource()
+    private dataSource: DataSource,
   ) {}
 
-  async createDeliveryType(
-    deliveryTypeDto: DeliveryTypeDto,
-  ): Promise<DeliveryTypeDto> {
-    const deliveryTypeEntity =
-      this.deliveryTypeConverter.toEntity(deliveryTypeDto);
+  async createDeliveryType(deliveryTypeDto: DeliveryTypeDto) {
+    const createdDeliveryType = await this.dataSource.transaction(
+      async (manager) => {
+        const deliveryTypeRepository = manager.getRepository(DeliveryType);
+        const deliveryTypeEntity = new DeliveryType();
+        deliveryTypeEntity.name = deliveryTypeDto.name;
+        deliveryTypeEntity.price_inner = deliveryTypeDto.price_inner;
+        deliveryTypeEntity.price_outer = deliveryTypeDto.price_outer;
+        deliveryTypeEntity.overpriced = deliveryTypeDto.overpriced;
+        deliveryTypeEntity.delivery_days = deliveryTypeDto.delivery_days;
+        const createdDeliveryType = await deliveryTypeRepository.save(
+          deliveryTypeEntity,
+        );
 
-    const createdDeliveryType = await this.deliveryTypeRepository.save(
-      deliveryTypeEntity,
+        return createdDeliveryType;
+      },
     );
-
-    return this.deliveryTypeConverter.toDto(createdDeliveryType);
+    return createdDeliveryType;
   }
 
-  async getDeliveryTypes(): Promise<DeliveryTypeListDto> {
+  async getListOfDeliveryType() {
     const page = 0;
     const limit = 10;
-    const [listDeliveryTypes, count] =
-      await this.deliveryTypeRepository.findAndCount({
+    const deliveryTypeRepository =
+      this.dataSource.manager.getRepository(DeliveryType);
+
+    const [listOfDeliveryTypes, count] =
+      await deliveryTypeRepository.findAndCount({
         order: {
-          createdAt: 'DESC',
+          created_at: 'DESC',
         },
         skip: page,
         take: limit,
       });
-    return this.deliveryTypeListConverter.toDto(
-      page,
-      limit,
-      count,
-      listDeliveryTypes,
-    );
+    return {
+      page: page,
+      limit: limit,
+      total: count,
+      delivery_types: listOfDeliveryTypes,
+    };
   }
 
   async getDeliveryTypeById(id: number): Promise<DeliveryType> {
-    const firstDeliveryType = await this.deliveryTypeRepository.findOneBy({
+    const deliveryTypeRepository =
+      this.dataSource.manager.getRepository(DeliveryType);
+
+    const firstDeliveryType = await deliveryTypeRepository.findOneBy({
       id: id,
     });
 
