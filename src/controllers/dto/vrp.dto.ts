@@ -4,4 +4,6 @@ export interface VrpDto {
   num_vehicles: number;
   weights: number[];
   dimensions: number[];
+  vehicle_dimensions: number[];
+  vehicle_capacities: number[];
 }

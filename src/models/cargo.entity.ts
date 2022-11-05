@@ -8,13 +8,6 @@ import {
 } from 'typeorm';
 import { Order } from './order.entity';
 
-export enum Status {
-  NEW = 'new',
-  DELIVERING = 'delivering',
-  FINISHED = 'finished',
-  ERROR = 'error',
-}
-
 @Entity()
 export class Cargo {
   @PrimaryGeneratedColumn()

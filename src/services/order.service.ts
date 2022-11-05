@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Repository, DataSource } from 'typeorm';
-import { Order } from '../models/order.entity';
+import { Order, Status } from '../models/order.entity';
 import {
   OrderDto,
   CargoDto,
@@ -114,11 +114,14 @@ export class OrderService {
     return createdOrder;
   }
 
-  async getListOfOrder() {
+  async getListOfOrder(filter: Status) {
     const page = 0;
     const limit = 10;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
+      where: {
+        status: filter,
+      },
       relations: ['order_address', 'cargo'],
       order: {
         created_at: 'DESC',
@@ -131,23 +134,23 @@ export class OrderService {
       page: page,
       limit: limit,
       total: count,
-      delivery_types: listOfOrders,
+      orders: listOfOrders,
     };
   }
 
   async getOrderById(id: number) {
     const orderRepository = this.dataSource.manager.getRepository(Order);
 
-    const firstOrder = await orderRepository.findOne({
+    const order = await orderRepository.findOne({
       where: { id: id },
       relations: ['order_address', 'cargo'],
     });
 
-    if (!firstOrder) {
+    if (!order) {
       throw new NotFoundException('The order id not found');
     }
 
-    return firstOrder;
+    return order;
   }
 
   // async schedule(res) {

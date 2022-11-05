@@ -16,13 +16,15 @@ export class PythonService {
         JSON.stringify(vrpDto.num_vehicles),
         JSON.stringify(vrpDto.depot),
         JSON.stringify(vrpDto.weights),
+        JSON.stringify(vrpDto.vehicle_capacities),
         JSON.stringify(vrpDto.dimensions),
+        JSON.stringify(vrpDto.vehicle_dimensions),
       ],
     };
 
-    PythonShell.run('vrp.py', options, function (err, result) {
+    PythonShell.run('vrp.py', options, function (err, schedule) {
       if (err) throw new InternalServerErrorException(err);
-      res.json(result);
+      res.json(schedule[0]);
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Shipper } from '../models/shipper.entity';
+import { Shipper, Status } from '../models/shipper.entity';
 import { ShipperDto, VehicleDto } from '../controllers/dto/shipper.dto';
 import {
   BadRequestException,
@@ -34,7 +34,7 @@ export class ShipperService {
   }
 
   async createAvatar(data: string) {
-    const allowExtension = ['png', 'jpg', 'jpeg'];
+    const allowExtension = ['png', 'jpg', 'jpeg', 'webp'];
 
     const buf = Buffer.from(data, 'base64');
     const type = await fileType.fromBuffer(buf);
@@ -87,12 +87,15 @@ export class ShipperService {
     return createdShipper;
   }
 
-  async getListOfShipper() {
+  async getListOfShipper(filter: Status) {
     const page = 0;
     const limit = 10;
     const shipperRepository = this.dataSource.manager.getRepository(Shipper);
 
     const [listOfShipper, count] = await shipperRepository.findAndCount({
+      where: {
+        status: filter,
+      },
       relations: ['vehicle'],
       order: {
         created_at: 'DESC',
@@ -104,7 +107,7 @@ export class ShipperService {
       page: page,
       limit: limit,
       total: count,
-      delivery_types: listOfShipper,
+      shippers: listOfShipper,
     };
   }
 

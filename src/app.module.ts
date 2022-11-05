@@ -1,5 +1,5 @@
-import { ScheduleService } from 'src/services/schedule.service';
-import { ScheduleController } from './controllers/schedule.controller';
+import { DeliveryService } from 'src/services/delivery.service';
+import { DeliveryController } from './controllers/delivery.controller';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -44,7 +44,7 @@ import { PythonController } from './controllers/python.controller';
     DeliveryTypeController,
     OrderController,
     ShipperController,
-    ScheduleController,
+    DeliveryController,
     PythonController,
   ],
   providers: [
@@ -53,7 +53,7 @@ import { PythonController } from './controllers/python.controller';
     OrderService,
     PythonService,
     ShipperService,
-    ScheduleService,
+    DeliveryService,
   ],
 })
 export class AppModule {}

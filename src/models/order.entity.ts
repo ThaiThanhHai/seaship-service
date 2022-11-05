@@ -8,10 +8,9 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
-  OneToMany,
 } from 'typeorm';
 import { DeliveryType } from './delivery-type.entity';
-import { Schedule } from './schedule.entity';
+import { Delivery } from './delivery.entity';
 import { Cargo } from './cargo.entity';
 
 export enum Status {
@@ -91,6 +90,6 @@ export class Order {
   })
   delivery_type: DeliveryType;
 
-  @OneToMany(() => Schedule, (schedule) => schedule.shippers)
-  schedule: Schedule[];
+  @OneToOne(() => Delivery, (delivery) => delivery.order)
+  delivery: Delivery;
 }

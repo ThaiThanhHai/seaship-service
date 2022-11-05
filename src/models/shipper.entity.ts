@@ -8,8 +8,13 @@ import {
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Schedule } from './schedule.entity';
+import { Delivery } from './delivery.entity';
 import { Vehicle } from './vehicle.entity';
+
+export enum Status {
+  ACTIVE = 'on',
+  NONACTIVE = 'off',
+}
 
 @Entity()
 export class Shipper {
@@ -28,6 +33,13 @@ export class Shipper {
   @Column({ length: 255 })
   email: string;
 
+  @Column({
+    type: 'enum',
+    enum: Status,
+    default: Status.ACTIVE,
+  })
+  status: Status;
+
   @Column()
   avatar: string;
 
@@ -41,8 +53,8 @@ export class Shipper {
   })
   updated_at: Date;
 
-  @OneToMany(() => Schedule, (schedule) => schedule.shippers)
-  schedule: Schedule[];
+  @OneToMany(() => Delivery, (delivery) => delivery.shippers)
+  delivery: Delivery[];
 
   @OneToOne(() => Vehicle, (vehicle) => vehicle.shipper)
   @JoinColumn({

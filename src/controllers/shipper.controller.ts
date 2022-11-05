@@ -1,6 +1,7 @@
 import { ShipperDto } from './dto/shipper.dto';
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { ShipperService } from 'src/services/shipper.service';
+import { Status } from 'src/models/shipper.entity';
 
 @Controller('shippers')
 export class ShipperController {
@@ -12,8 +13,8 @@ export class ShipperController {
   }
 
   @Get()
-  getListOfDeliveryType() {
-    return this.shipperService.getListOfShipper();
+  getListOfDeliveryType(@Query('filter') filter: Status) {
+    return this.shipperService.getListOfShipper(filter);
   }
 
   @Get(':id')

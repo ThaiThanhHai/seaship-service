@@ -6,17 +6,27 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { Shipper } from './shipper.entity';
 
 @Entity()
-export class Schedule {
+export class Delivery {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'date' })
   date: Date;
+
+  @Column({ type: 'float' })
+  distance: number;
+
+  @Column({ type: 'float' })
+  weight: number;
+
+  @Column({ type: 'float' })
+  dimension: number;
 
   @CreateDateColumn({
     type: 'timestamp',
@@ -28,21 +38,21 @@ export class Schedule {
   })
   updated_at: Date;
 
-  @ManyToOne(() => Shipper, (shipper) => shipper.schedule, {
+  @ManyToOne(() => Shipper, (shipper) => shipper.delivery, {
     nullable: false,
   })
   @JoinColumn({
     name: 'shipper_id',
-    foreignKeyConstraintName: 'fk-schedules-shipper',
+    foreignKeyConstraintName: 'fk-deliveries-shipper',
   })
   shippers: Shipper;
 
-  @ManyToOne(() => Order, (order) => order.schedule, {
+  @OneToOne(() => Order, (order) => order.delivery, {
     nullable: false,
   })
   @JoinColumn({
     name: 'order_id',
-    foreignKeyConstraintName: 'fk-schedules-orders',
+    foreignKeyConstraintName: 'fk-delivery-orders',
   })
-  orders: Shipper;
+  order: Order;
 }
