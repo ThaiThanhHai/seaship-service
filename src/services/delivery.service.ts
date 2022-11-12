@@ -1,3 +1,4 @@
+import { DeliveryStatusDto } from './../controllers/dto/delivery.dto';
 import { Order } from '../models/order.entity';
 import { DataSource } from 'typeorm';
 import { DeliveryDto } from '../controllers/dto/delivery.dto';
@@ -7,6 +8,8 @@ import { Shipper } from 'src/models/shipper.entity';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { lastValueFrom, map } from 'rxjs';
 import { Delivery } from 'src/models/delivery.entity';
+import { Status } from 'src/models/order.entity';
+import { Status as ShipperStatus } from 'src/models/shipper.entity';
 
 @Injectable()
 export class DeliveryService {
@@ -34,6 +37,95 @@ export class DeliveryService {
       total: count,
       deliveries: listOfDeliverys,
     };
+  }
+
+  async getDeliveryForShipper(shipper_id: string) {
+    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+
+    const [listOfDeliverys, count] = await deliveryRepository.findAndCount({
+      where: {
+        shippers: {
+          id: parseInt(shipper_id),
+        },
+        order: {
+          status: Status.DELIVERING,
+        },
+      },
+      relations: ['order', 'shippers', 'order.cargo', 'order.order_address'],
+      order: {
+        created_at: 'DESC',
+      },
+    });
+
+    const data = listOfDeliverys.map((firstOrder) => {
+      const result = {
+        name: firstOrder.order.receiver_name,
+        address: firstOrder.order.order_address.address,
+        id: firstOrder.order.id,
+      };
+      return result;
+    });
+    return {
+      total: count,
+      data: data,
+    };
+  }
+
+  async getOrderDetailForShipper(order_id: string) {
+    const orderRepository = this.dataSource.manager.getRepository(Order);
+
+    const firstOrder = await orderRepository.findOne({
+      where: {
+        id: parseInt(order_id),
+      },
+      relations: ['cargo', 'order_address', 'delivery', 'delivery_type'],
+      order: {
+        created_at: 'DESC',
+      },
+    });
+
+    const data = {
+      id: firstOrder.id,
+      name: firstOrder.cargo.name,
+      address: firstOrder.order_address.address,
+      shipping_fee: firstOrder.shipping_fee,
+      distance: firstOrder.delivery.distance,
+      delivery_type: firstOrder.delivery_type.name,
+    };
+    return data;
+  }
+
+  async updateStatusDelivery(
+    order_id: string,
+    deliveryStatusDto: DeliveryStatusDto,
+  ) {
+    const orderRepository = this.dataSource.manager.getRepository(Order);
+    const shipperRepository = this.dataSource.manager.getRepository(Shipper);
+
+    const firstOrder = await orderRepository.findOne({
+      where: {
+        id: parseInt(order_id),
+      },
+      relations: ['delivery.shippers'],
+    });
+
+    const listOrderOfShipper = await this.getDeliveryForShipper(
+      firstOrder.delivery.shippers.id.toString(),
+    );
+
+    if (listOrderOfShipper.total === 1) {
+      const firstShiper = await shipperRepository.findOneBy({
+        id: firstOrder.delivery.shippers.id,
+      });
+      firstShiper.status = ShipperStatus.ACTIVE;
+      await shipperRepository.save(firstShiper);
+    }
+
+    firstOrder.status = deliveryStatusDto.status;
+
+    const updatedOrder = await orderRepository.save(firstOrder);
+
+    return updatedOrder;
   }
 
   private async getOrderByIds(ids: number[]) {
@@ -82,10 +174,10 @@ export class DeliveryService {
     // Default depot location: Can Tho University
     const locateDepot = [10.030113295509345, 105.77061529689202];
     const coordinates: number[][] = [locateDepot];
-    listOfOrder.map((item) => {
+    listOfOrder.map((firstOrder) => {
       coordinates.push([
-        parseFloat(item.order_address.latitude),
-        parseFloat(item.order_address.longitude),
+        parseFloat(firstOrder.order_address.latitude),
+        parseFloat(firstOrder.order_address.longitude),
       ]);
     });
 
@@ -94,8 +186,8 @@ export class DeliveryService {
 
   private parseWeight(listOfOrder: Order[]) {
     const weights: number[] = [0];
-    listOfOrder.map((item) => {
-      weights.push(item.cargo.weight);
+    listOfOrder.map((firstOrder) => {
+      weights.push(firstOrder.cargo.weight);
     });
 
     return weights;
@@ -103,8 +195,8 @@ export class DeliveryService {
 
   private parseDimension(listOfOrder: Order[]) {
     const dimensions: number[] = [0];
-    listOfOrder.map((item) => {
-      dimensions.push(item.cargo.dimension);
+    listOfOrder.map((firstOrder) => {
+      dimensions.push(firstOrder.cargo.dimension);
     });
 
     return dimensions;
@@ -112,16 +204,16 @@ export class DeliveryService {
 
   private parseVehicleCapacities(listOfShipper: Shipper[]) {
     const vehicleCapacities: number[] = [];
-    listOfShipper.map((item) => {
-      vehicleCapacities.push(item.vehicle.capacity);
+    listOfShipper.map((firstOrder) => {
+      vehicleCapacities.push(firstOrder.vehicle.capacity);
     });
     return vehicleCapacities;
   }
 
   private parseVehicleDimensions(listOfShipper: Shipper[]) {
     const vehicleDimensions: number[] = [];
-    listOfShipper.map((item) => {
-      vehicleDimensions.push(item.vehicle.dimension);
+    listOfShipper.map((firstOrder) => {
+      vehicleDimensions.push(firstOrder.vehicle.dimension);
     });
     return vehicleDimensions;
   }
@@ -172,11 +264,15 @@ export class DeliveryService {
   ) {
     const result = [];
     schedule.forEach((value, shipper) => {
-      const routes = value.route.filter((item: any) => item !== 0);
-      const weights = value.weights.filter((item: any) => item !== 0);
+      const routes = value.route.filter((firstOrder: any) => firstOrder !== 0);
+      const weights = value.weights.filter(
+        (firstOrder: any) => firstOrder !== 0,
+      );
       value.distances.pop();
       const distances = value.distances;
-      const dimensions = value.dimensions.filter((item: any) => item !== 0);
+      const dimensions = value.dimensions.filter(
+        (firstOrder: any) => firstOrder !== 0,
+      );
       routes.forEach((order: any, index: any) => {
         const data = {
           distance: distances[index],
@@ -210,7 +306,7 @@ export class DeliveryService {
             const created = await deliveryRepository.save(deliveryEntity);
 
             delivery.order.status = 'delivering';
-            delivery.shippers.status = 'off';
+            delivery.shippers.status = 'delivering';
             await orderRepository.save(delivery.order);
             await shipperRepository.save(delivery.shippers);
 
@@ -245,6 +341,8 @@ export class DeliveryService {
       depot,
     );
 
+    console.log('schedule', schedule.result);
+
     const deliveryEntity = this.parseDeliveries(
       listOfOrder,
       listOfShipper,
@@ -254,5 +352,25 @@ export class DeliveryService {
     const createdDeliveries = await this.createDeliveries(deliveryEntity);
 
     return createdDeliveries;
+  }
+
+  async deleteDelivery(id: number) {
+    const createdListofDelivery = await this.dataSource.transaction(
+      async (manager) => {
+        const deliveryRepository = manager.getRepository(Delivery);
+        // const orderRepository = manager.getRepository(Order);
+        // const shipperRepository = manager.getRepository(Shipper);
+
+        const firstDelivery = await deliveryRepository.findOne({
+          where: {
+            id: id,
+          },
+          relations: ['shippers', 'order'],
+        });
+
+        return firstDelivery;
+      },
+    );
+    return createdListofDelivery;
   }
 }

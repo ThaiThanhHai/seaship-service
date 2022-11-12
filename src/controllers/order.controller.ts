@@ -11,7 +11,7 @@ export class OrderController {
     return this.orderService.createdOrder(orderDto);
   }
   @Get()
-  public getListOfOrder(@Query('filter') filter: Status) {
+  public getListOfOrder(@Query('filter') filter: Status[]) {
     return this.orderService.getListOfOrder(filter);
   }
   @Get(':id')

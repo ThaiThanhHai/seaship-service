@@ -8,6 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
+  DeleteDateColumn,
 } from 'typeorm';
 import { DeliveryType } from './delivery-type.entity';
 import { Delivery } from './delivery.entity';
@@ -63,12 +64,16 @@ export class Order {
   })
   updated_at: Date;
 
+  @DeleteDateColumn({
+    type: 'timestamp',
+  })
+  deleted_at: Date;
+
   @OneToOne(() => OrderAddress, (orderAddress) => orderAddress.order, {
     nullable: false,
   })
   @JoinColumn({
     name: 'order_address_id',
-    foreignKeyConstraintName: 'fk-order-order_address',
   })
   order_address: OrderAddress;
 
@@ -77,7 +82,6 @@ export class Order {
   })
   @JoinColumn({
     name: 'cargo_id',
-    foreignKeyConstraintName: 'fk-order-cargo',
   })
   cargo: Cargo;
 
@@ -86,7 +90,6 @@ export class Order {
   })
   @JoinColumn({
     name: 'delivery_type_id',
-    foreignKeyConstraintName: 'fk-orders-delivery_type',
   })
   delivery_type: DeliveryType;
 

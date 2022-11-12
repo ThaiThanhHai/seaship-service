@@ -5,7 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { Order, Status } from '../models/order.entity';
 import {
   OrderDto,
@@ -14,6 +14,7 @@ import {
 } from '../controllers/dto/order.dto';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Cargo } from 'src/models/cargo.entity';
+import { isArray } from 'lodash';
 
 @Injectable()
 export class OrderService {
@@ -114,13 +115,17 @@ export class OrderService {
     return createdOrder;
   }
 
-  async getListOfOrder(filter: Status) {
+  async getListOfOrder(filter: Status[]) {
+    let filterValue = filter;
+    if (!isArray(filter)) {
+      filterValue = [filter];
+    }
     const page = 0;
     const limit = 10;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
-        status: filter,
+        status: filter ? In(filterValue) : undefined,
       },
       relations: ['order_address', 'cargo'],
       order: {
@@ -152,73 +157,4 @@ export class OrderService {
 
     return order;
   }
-
-  // async schedule(res) {
-  //   const data = await this.getCoordinates();
-  //   const coordinates = data.coordinates;
-  //   // const coordinates = [
-  //   //   [10.045162, 105.746857],
-  //   //   [10.762622, 106.660172],
-  //   //   [10.086128, 106.016997],
-  //   //   [9.812741, 106.299291],
-  //   // ];
-  //   const num_vehicles = 4;
-  //   const depot = 0;
-  //   const weight = 100;
-  //   const dimension = 50;
-  //   const result = this.pythonService.getVehicleRouting(
-  //     coordinates,
-  //     num_vehicles,
-  //     depot,
-  //     weight,
-  //     dimension,
-  //     res,
-  //   );
-
-  //   return result;
-  // }
-
-  // async getCoordinates() {
-  //   const today = new Date();
-  //   const date = `${today.getFullYear()}-${
-  //     today.getMonth() + 1
-  //   }-${today.getDate()}`;
-
-  //   const [orders, count] = await this.orderRepository.findAndCount({
-  //     where: {
-  //       delivery_time: Raw((alias) => `${alias} = :date`, {
-  //         date: date,
-  //       }),
-  //     },
-  //     relations: ['orderAddress'],
-  //     order: {
-  //       created_at: 'DESC',
-  //     },
-  //   });
-
-  //   const coordinates = [];
-  //   orders.map((item) => {
-  //     coordinates.push([
-  //       parseFloat(item.order_address.latitude),
-  //       parseFloat(item.order_address.longitude),
-  //     ]);
-  //   });
-  //   return { coordinates, count };
-  // }
-
-  // async deliverySchedule() {
-  //   const media = this.httpService.get(
-  //     'http://localhost:3000/api/v1/orders/schedule',
-  //   );
-  //   const response = media.pipe(
-  //     map((res) => {
-  //       return res.data;
-  //     }),
-  //   );
-  //   const result = await lastValueFrom(response);
-
-  //   const route = result[0];
-
-  //   return { route };
-  // }
 }

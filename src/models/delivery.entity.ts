@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { Shipper } from './shipper.entity';
@@ -38,12 +39,16 @@ export class Delivery {
   })
   updated_at: Date;
 
+  @DeleteDateColumn({
+    type: 'timestamp',
+  })
+  deleted_at: Date;
+
   @ManyToOne(() => Shipper, (shipper) => shipper.delivery, {
     nullable: false,
   })
   @JoinColumn({
     name: 'shipper_id',
-    foreignKeyConstraintName: 'fk-deliveries-shipper',
   })
   shippers: Shipper;
 
@@ -52,7 +57,6 @@ export class Delivery {
   })
   @JoinColumn({
     name: 'order_id',
-    foreignKeyConstraintName: 'fk-delivery-orders',
   })
   order: Order;
 }

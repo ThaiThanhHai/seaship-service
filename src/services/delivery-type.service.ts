@@ -67,4 +67,22 @@ export class DeliveryTypeService {
 
     return firstDeliveryType;
   }
+
+  async deleteDeliveryType(id: number) {
+    const createdListofDelivery = await this.dataSource.transaction(
+      async (manager) => {
+        const deliveryTypeRepository = manager.getRepository(DeliveryType);
+
+        const firstDelivery = await deliveryTypeRepository.findOne({
+          where: {
+            id: id,
+          },
+          relations: ['shippers', 'order'],
+        });
+
+        return firstDelivery;
+      },
+    );
+    return createdListofDelivery;
+  }
 }

@@ -7,6 +7,7 @@ import {
   OneToMany,
   OneToOne,
   JoinColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Delivery } from './delivery.entity';
 import { Vehicle } from './vehicle.entity';
@@ -14,6 +15,7 @@ import { Vehicle } from './vehicle.entity';
 export enum Status {
   ACTIVE = 'on',
   NONACTIVE = 'off',
+  DELIVERING = 'delivering',
 }
 
 @Entity()
@@ -23,9 +25,6 @@ export class Shipper {
 
   @Column({ length: 255 })
   name: string;
-
-  @Column({ type: 'integer' })
-  age: number;
 
   @Column({ length: 255 })
   phone: string;
@@ -53,13 +52,17 @@ export class Shipper {
   })
   updated_at: Date;
 
+  @DeleteDateColumn({
+    type: 'timestamp',
+  })
+  deleted_at: Date;
+
   @OneToMany(() => Delivery, (delivery) => delivery.shippers)
   delivery: Delivery[];
 
   @OneToOne(() => Vehicle, (vehicle) => vehicle.shipper)
   @JoinColumn({
     name: 'vehicle_id',
-    foreignKeyConstraintName: 'fk-shipper-vehicle',
   })
   vehicle: Vehicle;
 }

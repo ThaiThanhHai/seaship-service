@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Vehicle } from 'src/models/vehicle.entity';
 import * as fileType from 'file-type';
@@ -13,6 +13,7 @@ import * as path from 'path';
 import { Buffer } from 'buffer';
 import { promises } from 'fs';
 import { uuid } from 'uuidv4';
+import { isArray } from 'lodash';
 
 @Injectable()
 export class ShipperService {
@@ -73,7 +74,6 @@ export class ShipperService {
 
         const shipperEntity = new Shipper();
         shipperEntity.name = shipperDto.name;
-        shipperEntity.age = shipperDto.age;
         shipperEntity.email = shipperDto.email;
         shipperEntity.phone = shipperDto.phone;
         shipperEntity.avatar = avatar;
@@ -84,17 +84,22 @@ export class ShipperService {
         return createdShipper;
       },
     );
+    console.log(createdShipper);
     return createdShipper;
   }
 
-  async getListOfShipper(filter: Status) {
+  async getListOfShipper(filter: Status[]) {
     const page = 0;
     const limit = 10;
+    let filterValue = filter;
+    if (!isArray(filter)) {
+      filterValue = [filter];
+    }
     const shipperRepository = this.dataSource.manager.getRepository(Shipper);
 
     const [listOfShipper, count] = await shipperRepository.findAndCount({
       where: {
-        status: filter,
+        status: filter ? In(filterValue) : undefined,
       },
       relations: ['vehicle'],
       order: {
@@ -123,5 +128,32 @@ export class ShipperService {
     }
 
     return firstShipper;
+  }
+
+  async deleteShipper(id: number) {
+    console.log(id);
+    const createdListofDelivery = await this.dataSource.transaction(
+      async (manager) => {
+        const shipperRepository = manager.getRepository(Shipper);
+
+        const firstDelivery = await shipperRepository.findOne({
+          where: {
+            id: id,
+          },
+          relations: ['vehicle'],
+        });
+
+        if (!firstDelivery) {
+          throw new Error('The shipper id not found');
+        }
+
+        const deletedShipper = await shipperRepository.softRemove(
+          firstDelivery,
+        );
+
+        return deletedShipper;
+      },
+    );
+    return createdListofDelivery;
   }
 }

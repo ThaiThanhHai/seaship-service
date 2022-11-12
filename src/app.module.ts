@@ -16,6 +16,8 @@ import { join } from 'path';
 import { ShipperController } from './controllers/shipper.controller';
 import { ShipperService } from './services/shipper.service';
 import { PythonController } from './controllers/python.controller';
+import { AuthController } from './controllers/auth.controller';
+import { AuthService } from './services/auth.service';
 
 @Module({
   imports: [
@@ -33,7 +35,6 @@ import { PythonController } from './controllers/python.controller';
         password: 'password',
         database: 'seaship_dev',
         entities: [`dist/models/*{.ts,.js}`],
-        autoLoadEntities: true,
         synchronize: false,
       }),
     }),
@@ -46,6 +47,7 @@ import { PythonController } from './controllers/python.controller';
     ShipperController,
     DeliveryController,
     PythonController,
+    AuthController,
   ],
   providers: [
     AppService,
@@ -54,6 +56,7 @@ import { PythonController } from './controllers/python.controller';
     PythonService,
     ShipperService,
     DeliveryService,
+    AuthService,
   ],
 })
 export class AppModule {}

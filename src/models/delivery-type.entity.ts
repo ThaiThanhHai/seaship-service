@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Order } from './order.entity';
 
@@ -37,6 +38,11 @@ export class DeliveryType {
     type: 'timestamp',
   })
   updated_at: Date;
+
+  @DeleteDateColumn({
+    type: 'timestamp',
+  })
+  deleted_at: Date;
 
   @OneToMany(() => Order, (order) => order.delivery_type)
   orders: Order[];
