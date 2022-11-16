@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Shipper } from 'src/models/shipper.entity';
-import { LoginDto } from 'src/controllers/dto/login.dto';
+import { LoginDto, SupervisorLoginDto } from 'src/controllers/dto/login.dto';
 import { RegisterDto } from 'src/controllers/dto/register.dto';
 import { Vehicle } from 'src/models/vehicle.entity';
+import { Supervisor } from 'src/models/supervisor.entity';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,22 @@ export class AuthService {
     }
 
     return firstShipper;
+  }
+
+  async supervisorLogin(supervisorLoginDto: SupervisorLoginDto) {
+    const supervisorRepository =
+      this.dataSource.manager.getRepository(Supervisor);
+    const firstSupervisor = await supervisorRepository.findOne({
+      where: {
+        name: supervisorLoginDto.name,
+        password: supervisorLoginDto.password,
+      },
+    });
+    if (!firstSupervisor) {
+      throw new Error('Login failed');
+    }
+
+    return firstSupervisor;
   }
 
   private async checkPhoneNotExist(phone: string) {

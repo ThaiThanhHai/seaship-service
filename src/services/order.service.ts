@@ -1,3 +1,4 @@
+import { Supervisor } from './../models/supervisor.entity';
 import { DeliveryType } from './../models/delivery-type.entity';
 import { OrderAddress } from './../models/order-address.entity';
 import {
@@ -34,6 +35,19 @@ export class OrderService {
     }
 
     return firstDeliveryType;
+  }
+
+  private async getSupervisorById(
+    id: number,
+    supervisorRepository: Repository<Supervisor>,
+  ) {
+    const supervisor = await supervisorRepository.findOneBy({ id });
+
+    if (!supervisor) {
+      throw new BadRequestException('The supervisor id not found');
+    }
+
+    return supervisor;
   }
 
   private async createCargo(
@@ -77,10 +91,16 @@ export class OrderService {
       const deliveryTypeRepository = manager.getRepository(DeliveryType);
       const cargoRepository = manager.getRepository(Cargo);
       const orderAddressRepository = manager.getRepository(OrderAddress);
+      const supervisorRepository = manager.getRepository(Supervisor);
 
       const deliveryType = await this.getDeliveryTypeById(
         orderDto.delivery_type_id,
         deliveryTypeRepository,
+      );
+
+      const supervisor = await this.getSupervisorById(
+        orderDto.supervisor_id,
+        supervisorRepository,
       );
 
       const createdCargo = await this.createCargo(
@@ -101,6 +121,7 @@ export class OrderService {
       orderEntity.shipping_fee = orderDto.shipping_fee;
       orderEntity.note = orderDto.note;
       orderEntity.delivery_type = deliveryType;
+      orderEntity.supervisor = supervisor;
       orderEntity.cargo = createdCargo;
       orderEntity.order_address = createdOrderAddress;
       orderEntity.delivery_time = this.parseDeliveryTime(
@@ -156,5 +177,23 @@ export class OrderService {
     }
 
     return order;
+  }
+
+  async deleteOrder(ids: Array<number>) {
+    const createdListofOrder = await this.dataSource.transaction(
+      async (manager) => {
+        const orderRepository = manager.getRepository(Order);
+
+        Promise.all(
+          ids.map(async (id) => {
+            const deleteResponse = await orderRepository.softDelete(id);
+            if (!deleteResponse.affected) {
+              throw new BadRequestException('Not found');
+            }
+          }),
+        );
+      },
+    );
+    return createdListofOrder;
   }
 }

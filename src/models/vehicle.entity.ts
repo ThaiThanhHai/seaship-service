@@ -16,7 +16,7 @@ export class Vehicle {
   @Column({ type: 'float' })
   capacity: number;
 
-  @Column({ type: 'integer' })
+  @Column({ type: 'float' })
   dimension: number;
 
   @CreateDateColumn({

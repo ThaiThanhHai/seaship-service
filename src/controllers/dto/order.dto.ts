@@ -21,6 +21,7 @@ export interface OrderDto {
   shipping_fee: number;
   note: string;
   delivery_type_id: number;
+  supervisor_id: number;
   cargo: CargoDto;
   order_address: OrderAddressDto;
 }

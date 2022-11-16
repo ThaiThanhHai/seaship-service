@@ -341,8 +341,6 @@ export class DeliveryService {
       depot,
     );
 
-    console.log('schedule', schedule.result);
-
     const deliveryEntity = this.parseDeliveries(
       listOfOrder,
       listOfShipper,

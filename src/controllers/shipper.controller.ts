@@ -1,13 +1,5 @@
 import { ShipperDto } from './dto/shipper.dto';
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Param,
-  Query,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, Put } from '@nestjs/common';
 import { ShipperService } from 'src/services/shipper.service';
 import { Status } from 'src/models/shipper.entity';
 
@@ -21,7 +13,7 @@ export class ShipperController {
   }
 
   @Get()
-  getListOfDeliveryType(@Query('filter') filter: Status[]) {
+  getListOfShipper(@Query('filter') filter: Status[]) {
     return this.shipperService.getListOfShipper(filter);
   }
 
@@ -30,8 +22,8 @@ export class ShipperController {
     return this.shipperService.getShipperById(parseInt(id));
   }
 
-  @Delete(':id')
-  deleteShipper(@Param('id') id: string) {
-    return this.shipperService.deleteShipper(parseInt(id));
+  @Put()
+  deleteShipper(@Body('ids') ids: Array<number>) {
+    return this.shipperService.deleteShipper(ids);
   }
 }

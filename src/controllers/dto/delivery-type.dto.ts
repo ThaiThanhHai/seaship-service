@@ -4,4 +4,5 @@ export interface DeliveryTypeDto {
   price_outer: number;
   overpriced: number;
   delivery_days: number;
+  supervisor_id: number;
 }

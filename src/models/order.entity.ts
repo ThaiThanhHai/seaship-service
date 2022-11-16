@@ -13,6 +13,7 @@ import {
 import { DeliveryType } from './delivery-type.entity';
 import { Delivery } from './delivery.entity';
 import { Cargo } from './cargo.entity';
+import { Supervisor } from './supervisor.entity';
 
 export enum Status {
   NEW = 'new',
@@ -95,4 +96,12 @@ export class Order {
 
   @OneToOne(() => Delivery, (delivery) => delivery.order)
   delivery: Delivery;
+
+  @ManyToOne(() => Supervisor, (supervisor) => supervisor.order, {
+    nullable: false,
+  })
+  @JoinColumn({
+    name: 'supervisor_id',
+  })
+  supervisor: Supervisor;
 }

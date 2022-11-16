@@ -1,8 +1,13 @@
 import { DeliveryType } from './../models/delivery-type.entity';
 import { DeliveryTypeDto } from './../controllers/dto/delivery-type.dto';
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Supervisor } from 'src/models/supervisor.entity';
 
 @Injectable()
 export class DeliveryTypeService {
@@ -11,15 +16,36 @@ export class DeliveryTypeService {
     private dataSource: DataSource,
   ) {}
 
+  private async getSupervisorById(
+    id: number,
+    supervisorRepository: Repository<Supervisor>,
+  ) {
+    const supervisor = await supervisorRepository.findOneBy({ id });
+
+    if (!supervisor) {
+      throw new BadRequestException('The supervisor id not found');
+    }
+
+    return supervisor;
+  }
+
   async createDeliveryType(deliveryTypeDto: DeliveryTypeDto) {
     const createdDeliveryType = await this.dataSource.transaction(
       async (manager) => {
         const deliveryTypeRepository = manager.getRepository(DeliveryType);
+        const supervisorRepository = manager.getRepository(Supervisor);
+
+        const supervisor = await this.getSupervisorById(
+          deliveryTypeDto.supervisor_id,
+          supervisorRepository,
+        );
+
         const deliveryTypeEntity = new DeliveryType();
         deliveryTypeEntity.name = deliveryTypeDto.name;
         deliveryTypeEntity.price_inner = deliveryTypeDto.price_inner;
         deliveryTypeEntity.price_outer = deliveryTypeDto.price_outer;
         deliveryTypeEntity.overpriced = deliveryTypeDto.overpriced;
+        deliveryTypeEntity.supervisor = supervisor;
         deliveryTypeEntity.delivery_days = deliveryTypeDto.delivery_days;
         const createdDeliveryType = await deliveryTypeRepository.save(
           deliveryTypeEntity,
@@ -68,19 +94,19 @@ export class DeliveryTypeService {
     return firstDeliveryType;
   }
 
-  async deleteDeliveryType(id: number) {
+  async deleteDeliveryType(ids: Array<number>) {
     const createdListofDelivery = await this.dataSource.transaction(
       async (manager) => {
         const deliveryTypeRepository = manager.getRepository(DeliveryType);
 
-        const firstDelivery = await deliveryTypeRepository.findOne({
-          where: {
-            id: id,
-          },
-          relations: ['shippers', 'order'],
-        });
-
-        return firstDelivery;
+        Promise.all(
+          ids.map(async (id) => {
+            const deleteResponse = await deliveryTypeRepository.softDelete(id);
+            if (!deleteResponse.affected) {
+              throw new BadRequestException('Not found');
+            }
+          }),
+        );
       },
     );
     return createdListofDelivery;

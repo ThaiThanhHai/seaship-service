@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
 import { Status } from 'src/models/order.entity';
 import { OrderService } from 'src/services/order.service';
 import { OrderDto } from '../controllers/dto/order.dto';
@@ -17,5 +17,10 @@ export class OrderController {
   @Get(':id')
   getOrderById(@Param('id') id: string) {
     return this.orderService.getOrderById(parseInt(id));
+  }
+
+  @Put()
+  deleteDeliveryType(@Body('ids') ids: Array<number>) {
+    return this.orderService.deleteOrder(ids);
   }
 }
