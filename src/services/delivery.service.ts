@@ -1,6 +1,6 @@
 import { DeliveryStatusDto } from './../controllers/dto/delivery.dto';
 import { Order } from '../models/order.entity';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 import { DeliveryDto } from '../controllers/dto/delivery.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios/dist';
@@ -10,6 +10,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { Delivery } from 'src/models/delivery.entity';
 import { Status } from 'src/models/order.entity';
 import { Status as ShipperStatus } from 'src/models/shipper.entity';
+import { sum, round } from 'lodash';
 
 @Injectable()
 export class DeliveryService {
@@ -19,23 +20,69 @@ export class DeliveryService {
     private httpService: HttpService,
   ) {}
   async getListOfDelivery() {
-    const page = 0;
-    const limit = 10;
-    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+    const shipperRepository = this.dataSource.manager.getRepository(Shipper);
 
-    const [listOfDeliverys, count] = await deliveryRepository.findAndCount({
-      relations: ['order', 'shippers', 'order.cargo', 'order.order_address'],
+    const [listOfShipper] = await shipperRepository.findAndCount({
+      where: {
+        status: In([Status.DELIVERING]),
+      },
+      relations: ['vehicle', 'delivery', 'delivery.order'],
       order: {
         created_at: 'DESC',
       },
-      skip: page,
-      take: limit,
     });
+    const response = [];
+    listOfShipper.forEach((data) => {
+      const totalWeight = sum(data.delivery.map((item) => item.weight));
+      const totalDimension = sum(data.delivery.map((item) => item.dimension));
+      const totalDistance = sum(data.delivery.map((item) => item.distance));
+      const count = data.delivery.length;
+      response.push({
+        id: data.id,
+        name: data.name,
+        totalWeight: totalWeight,
+        maxWeight: data.vehicle.capacity,
+        totalDimension: totalDimension,
+        maxDimension: data.vehicle.dimension,
+        totalDistance: round(totalDistance / 1000, 2),
+        count: count,
+      });
+    });
+
     return {
-      page: page,
-      limit: limit,
-      total: count,
-      deliveries: listOfDeliverys,
+      schedule_of_shipper: response,
+    };
+  }
+
+  async getListOrderOfShipper(shipperId: string) {
+    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+
+    const [listDeliveryOrder] = await deliveryRepository.findAndCount({
+      where: {
+        shippers: {
+          id: parseInt(shipperId),
+        },
+      },
+      relations: ['order', 'shippers', 'order.order_address', 'order.cargo'],
+      order: {
+        created_at: 'DESC',
+      },
+    });
+    const response = [];
+    listDeliveryOrder.forEach((data) => {
+      response.push({
+        id: data.id,
+        shipper: data.shippers.name,
+        name: data.order.cargo.name,
+        dimension: data.dimension,
+        weight: data.weight,
+        address: data.order.order_address.address,
+        fee: data.order.shipping_fee,
+      });
+    });
+
+    return {
+      list_delivery_order: response,
     };
   }
 
@@ -356,8 +403,6 @@ export class DeliveryService {
     const createdListofDelivery = await this.dataSource.transaction(
       async (manager) => {
         const deliveryRepository = manager.getRepository(Delivery);
-        // const orderRepository = manager.getRepository(Order);
-        // const shipperRepository = manager.getRepository(Shipper);
 
         const firstDelivery = await deliveryRepository.findOne({
           where: {

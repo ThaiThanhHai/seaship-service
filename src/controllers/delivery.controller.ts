@@ -23,6 +23,10 @@ export class DeliveryController {
   getListOfDelivery() {
     return this.deliveryService.getListOfDelivery();
   }
+  @Get('order_of_shipper/:shipper_id')
+  getListOrderOfShipper(@Param('shipper_id') shipper_id: string) {
+    return this.deliveryService.getListOrderOfShipper(shipper_id);
+  }
 
   @Get('shipper/:shipper_id')
   getDeliveryForShipper(@Param('shipper_id') shipper_id: string) {
