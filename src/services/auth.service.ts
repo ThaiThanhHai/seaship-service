@@ -32,7 +32,7 @@ export class AuthService {
       this.dataSource.manager.getRepository(Supervisor);
     const firstSupervisor = await supervisorRepository.findOne({
       where: {
-        name: supervisorLoginDto.name,
+        email: supervisorLoginDto.email,
         password: supervisorLoginDto.password,
       },
     });

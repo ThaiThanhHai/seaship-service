@@ -67,6 +67,7 @@ def main():
     vehicle_capacities = json.loads(sys.argv[5])
     dimension = json.loads(sys.argv[6])
     vehicle_dimensions = json.loads(sys.argv[7])
+    max_travel = json.loads(sys.argv[8])
 
     # coordinates = [
     #     [10.030113295509345, 105.77061529689202],
@@ -111,7 +112,7 @@ def main():
     routing.AddDimension(
         transit_callback_index,
         0,  # no slack
-        100000,  # vehicle maximum travel distance
+        max_travel,  # vehicle maximum travel distance
         True,  # start cumul to zero
         'Distance')
     distance_dimension = routing.GetDimensionOrDie(dimension_name)

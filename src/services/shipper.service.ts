@@ -55,10 +55,12 @@ export class ShipperService {
         const vehicleRepository = manager.getRepository(Vehicle);
 
         const vehicleEntity = new Vehicle();
+        vehicleEntity.name = 'motorbike';
         vehicleEntity.dimension = 250;
         vehicleEntity.capacity = 50;
 
         if (shipperDto.vehicle === 'truck') {
+          vehicleEntity.name = 'truck';
           vehicleEntity.dimension = 8000;
           vehicleEntity.capacity = 1000;
         }
@@ -80,7 +82,7 @@ export class ShipperService {
     return createdShipper;
   }
 
-  async getListOfShipper(filter: Status[]) {
+  async getListOfShipper(filter: Status[], vehicle: string) {
     const page = 0;
     const limit = 10;
     let filterValue = filter;
@@ -92,6 +94,11 @@ export class ShipperService {
     const [listOfShipper, count] = await shipperRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
+        vehicle: vehicle
+          ? {
+              name: vehicle,
+            }
+          : undefined,
       },
       relations: ['vehicle'],
       order: {
@@ -129,7 +136,7 @@ export class ShipperService {
 
         Promise.all(
           ids.map(async (id) => {
-            const deleteResponse = await shipperRepository.softDelete(id);
+            const deleteResponse = await shipperRepository.delete(id);
             if (!deleteResponse.affected) {
               throw new BadRequestException('Not found');
             }

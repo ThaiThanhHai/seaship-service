@@ -13,8 +13,11 @@ export class ShipperController {
   }
 
   @Get()
-  getListOfShipper(@Query('filter') filter: Status[]) {
-    return this.shipperService.getListOfShipper(filter);
+  getListOfShipper(
+    @Query('filter') filter: Status[],
+    @Query('search') vehicle: string,
+  ) {
+    return this.shipperService.getListOfShipper(filter, vehicle);
   }
 
   @Get(':id')

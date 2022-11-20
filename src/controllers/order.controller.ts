@@ -14,6 +14,17 @@ export class OrderController {
   public getListOfOrder(@Query('filter') filter: Status[]) {
     return this.orderService.getListOfOrder(filter);
   }
+
+  @Get('cantho')
+  public getListOfOrderAtCanTho(@Query('filter') filter: Status[]) {
+    return this.orderService.getListOfOrderAtCanTho(filter);
+  }
+
+  @Get('not_cantho')
+  public getListOfOrderNotAtCanTho(@Query('filter') filter: Status[]) {
+    return this.orderService.getListOfOrderNotAtCanTho(filter);
+  }
+
   @Get(':id')
   getOrderById(@Param('id') id: string) {
     return this.orderService.getOrderById(parseInt(id));

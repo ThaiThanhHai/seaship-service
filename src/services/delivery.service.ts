@@ -40,12 +40,13 @@ export class DeliveryService {
       response.push({
         id: data.id,
         name: data.name,
-        totalWeight: totalWeight,
+        totalWeight: round(totalWeight, 2),
         maxWeight: data.vehicle.capacity,
-        totalDimension: totalDimension,
+        totalDimension: round(totalDimension, 2),
         maxDimension: data.vehicle.dimension,
         totalDistance: round(totalDistance / 1000, 2),
         count: count,
+        vehicle: data.vehicle.name,
       });
     });
 
@@ -78,6 +79,7 @@ export class DeliveryService {
         weight: data.weight,
         address: data.order.order_address.address,
         fee: data.order.shipping_fee,
+        status: data.order.status,
       });
     });
 
@@ -273,6 +275,7 @@ export class DeliveryService {
     dimensions: number[],
     vehicle_dimensions: number[],
     depot: number,
+    max_travel: number,
   ) {
     const requestConfig = {
       maxBodyLength: Infinity,
@@ -291,6 +294,7 @@ export class DeliveryService {
         dimensions,
         vehicle_dimensions,
         depot,
+        max_travel,
       },
       requestConfig,
     );
@@ -367,7 +371,7 @@ export class DeliveryService {
     return createdListofDelivery;
   }
 
-  async deliverySchedule(deliveryDto: DeliveryDto) {
+  async deliveryScheduleTruck(deliveryDto: DeliveryDto) {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
@@ -377,6 +381,7 @@ export class DeliveryService {
     const weights = this.parseWeight(listOfOrder);
     const dimensions = this.parseDimension(listOfOrder);
     const depot = 0;
+    const max_travel = 500000;
 
     const schedule = await this.getVehicleRouting(
       coordinates,
@@ -386,6 +391,41 @@ export class DeliveryService {
       dimensions,
       vehicle_dimensions,
       depot,
+      max_travel,
+    );
+
+    const deliveryEntity = this.parseDeliveries(
+      listOfOrder,
+      listOfShipper,
+      schedule.result,
+    );
+
+    const createdDeliveries = await this.createDeliveries(deliveryEntity);
+
+    return createdDeliveries;
+  }
+
+  async deliveryScheduleMotorbike(deliveryDto: DeliveryDto) {
+    const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
+    const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
+    const num_vehicles = listOfShipper.length;
+    const vehicle_capacities = this.parseVehicleCapacities(listOfShipper);
+    const vehicle_dimensions = this.parseVehicleDimensions(listOfShipper);
+    const coordinates = this.parseCordinates(listOfOrder);
+    const weights = this.parseWeight(listOfOrder);
+    const dimensions = this.parseDimension(listOfOrder);
+    const depot = 0;
+    const max_travel = 100000;
+
+    const schedule = await this.getVehicleRouting(
+      coordinates,
+      num_vehicles,
+      weights,
+      vehicle_capacities,
+      dimensions,
+      vehicle_dimensions,
+      depot,
+      max_travel,
     );
 
     const deliveryEntity = this.parseDeliveries(

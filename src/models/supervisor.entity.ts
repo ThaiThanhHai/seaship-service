@@ -24,7 +24,7 @@ export class Supervisor {
   @Column({ length: 255 })
   phone: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, unique: true })
   email: string;
 
   @Column()

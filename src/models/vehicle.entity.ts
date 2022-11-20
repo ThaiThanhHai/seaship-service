@@ -13,6 +13,9 @@ export class Vehicle {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ length: 255 })
+  name: string;
+
   @Column({ type: 'float' })
   capacity: number;
 

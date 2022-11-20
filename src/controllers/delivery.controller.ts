@@ -14,9 +14,14 @@ import { DeliveryDto, DeliveryStatusDto } from './dto/delivery.dto';
 export class DeliveryController {
   constructor(private readonly deliveryService: DeliveryService) {}
 
-  @Post()
-  public deliverySchedule(@Body() deliveryDto: DeliveryDto) {
-    return this.deliveryService.deliverySchedule(deliveryDto);
+  @Post('truck')
+  public deliveryScheduleTruck(@Body() deliveryDto: DeliveryDto) {
+    return this.deliveryService.deliveryScheduleTruck(deliveryDto);
+  }
+
+  @Post('motorbike')
+  public deliveryScheduleMotorbike(@Body() deliveryDto: DeliveryDto) {
+    return this.deliveryService.deliveryScheduleMotorbike(deliveryDto);
   }
 
   @Get()

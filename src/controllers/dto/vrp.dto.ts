@@ -6,4 +6,5 @@ export interface VrpDto {
   dimensions: number[];
   vehicle_dimensions: number[];
   vehicle_capacities: number[];
+  max_travel: number;
 }

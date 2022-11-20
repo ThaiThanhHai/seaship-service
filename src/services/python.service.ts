@@ -19,6 +19,7 @@ export class PythonService {
         JSON.stringify(vrpDto.vehicle_capacities),
         JSON.stringify(vrpDto.dimensions),
         JSON.stringify(vrpDto.vehicle_dimensions),
+        JSON.stringify(vrpDto.max_travel),
       ],
     };
 

@@ -3,6 +3,6 @@ export interface LoginDto {
 }
 
 export interface SupervisorLoginDto {
-  name: string;
+  email: string;
   password: string;
 }

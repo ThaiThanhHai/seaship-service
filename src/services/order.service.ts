@@ -6,7 +6,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository, DataSource, In } from 'typeorm';
+import { Repository, DataSource, In, Like, Not } from 'typeorm';
 import { Order, Status } from '../models/order.entity';
 import {
   OrderDto,
@@ -147,6 +147,70 @@ export class OrderService {
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
+      },
+      relations: ['order_address', 'cargo'],
+      order: {
+        created_at: 'DESC',
+      },
+      skip: page,
+      take: limit,
+    });
+
+    return {
+      page: page,
+      limit: limit,
+      total: count,
+      orders: listOfOrders,
+    };
+  }
+
+  async getListOfOrderAtCanTho(filter: Status[]) {
+    let filterValue = filter;
+    if (!isArray(filter)) {
+      filterValue = [filter];
+    }
+    const search = '%Thành phố Cần Thơ';
+    const page = 0;
+    const limit = 10;
+    const orderRepository = this.dataSource.manager.getRepository(Order);
+    const [listOfOrders, count] = await orderRepository.findAndCount({
+      where: {
+        status: filter ? In(filterValue) : undefined,
+        order_address: {
+          address: Like(search),
+        },
+      },
+      relations: ['order_address', 'cargo'],
+      order: {
+        created_at: 'DESC',
+      },
+      skip: page,
+      take: limit,
+    });
+
+    return {
+      page: page,
+      limit: limit,
+      total: count,
+      orders: listOfOrders,
+    };
+  }
+
+  async getListOfOrderNotAtCanTho(filter: Status[]) {
+    let filterValue = filter;
+    if (!isArray(filter)) {
+      filterValue = [filter];
+    }
+    const search = '%Thành phố Cần Thơ';
+    const page = 0;
+    const limit = 10;
+    const orderRepository = this.dataSource.manager.getRepository(Order);
+    const [listOfOrders, count] = await orderRepository.findAndCount({
+      where: {
+        status: filter ? In(filterValue) : undefined,
+        order_address: {
+          address: Not(Like(search)),
+        },
       },
       relations: ['order_address', 'cargo'],
       order: {
