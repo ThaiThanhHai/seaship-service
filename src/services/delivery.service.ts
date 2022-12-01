@@ -271,9 +271,9 @@ export class DeliveryService {
     coordinates: number[][],
     num_vehicles: number,
     weights: number[],
-    vehicle_capacities: number[],
+    vehicle_weight: number[],
     dimensions: number[],
-    vehicle_dimensions: number[],
+    vehicle_dimension: number[],
     depot: number,
     max_travel: number,
   ) {
@@ -290,9 +290,9 @@ export class DeliveryService {
         coordinates,
         num_vehicles,
         weights,
-        vehicle_capacities,
+        vehicle_weight,
         dimensions,
-        vehicle_dimensions,
+        vehicle_dimension,
         depot,
         max_travel,
       },
@@ -375,8 +375,8 @@ export class DeliveryService {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
-    const vehicle_capacities = this.parseVehicleCapacities(listOfShipper);
-    const vehicle_dimensions = this.parseVehicleDimensions(listOfShipper);
+    const vehicle_weight = this.parseVehicleCapacities(listOfShipper);
+    const vehicle_dimension = this.parseVehicleDimensions(listOfShipper);
     const coordinates = this.parseCordinates(listOfOrder);
     const weights = this.parseWeight(listOfOrder);
     const dimensions = this.parseDimension(listOfOrder);
@@ -387,9 +387,9 @@ export class DeliveryService {
       coordinates,
       num_vehicles,
       weights,
-      vehicle_capacities,
+      vehicle_weight,
       dimensions,
-      vehicle_dimensions,
+      vehicle_dimension,
       depot,
       max_travel,
     );
