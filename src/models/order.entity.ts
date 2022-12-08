@@ -43,6 +43,9 @@ export class Order {
   delivery_time: Date;
 
   @Column({ type: 'float' })
+  distance: number;
+
+  @Column({ type: 'float' })
   shipping_fee: number;
 
   @Column({ length: 255, nullable: true })

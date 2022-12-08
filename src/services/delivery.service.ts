@@ -225,8 +225,8 @@ export class DeliveryService {
     const coordinates: number[][] = [locateDepot];
     listOfOrder.map((firstOrder) => {
       coordinates.push([
-        parseFloat(firstOrder.order_address.latitude),
-        parseFloat(firstOrder.order_address.longitude),
+        firstOrder.order_address.latitude,
+        firstOrder.order_address.longitude,
       ]);
     });
 

@@ -16,12 +16,18 @@ import {
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Cargo } from 'src/models/cargo.entity';
 import { isArray } from 'lodash';
+import { lastValueFrom, map } from 'rxjs';
+import { HttpService } from '@nestjs/axios/dist';
+import { round } from 'lodash';
 
 @Injectable()
 export class OrderService {
+  private latDepot = 10.03010273;
+  private lngDepot = 105.770626025;
   constructor(
     @InjectDataSource()
     private dataSource: DataSource,
+    private httpService: HttpService,
   ) {}
 
   private async getDeliveryTypeById(
@@ -85,7 +91,94 @@ export class OrderService {
     return deliveryTime;
   }
 
+  private async getCoordinates(adđress: string) {
+    const requestConfig = {
+      maxBodyLength: Infinity,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    const value = encodeURI(adđress);
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${value}.json?access_token=pk.eyJ1IjoidGhhaXRoYW5oaGFpIiwiYSI6ImNsOGVwZ2s0bjBpdWQzdnA5c3U5NmVoM3IifQ.h7reW0CjFKe-waithRjc0g`;
+    const media = this.httpService.get(url, requestConfig);
+    const response = media.pipe(
+      map((res) => {
+        return res.data;
+      }),
+    );
+    const result = await lastValueFrom(response);
+
+    return result;
+  }
+
+  pasreEncodeURI(address) {
+    const newAddress = address.map((data) => {
+      return `${data.lng}%2C${data.lat}`;
+    });
+    return newAddress.join('%3B');
+  }
+
+  async getDistance(address) {
+    const requestConfig = {
+      maxBodyLength: Infinity,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    const coordinates = this.pasreEncodeURI(address);
+    const url = `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${coordinates}?alternatives=false&geometries=geojson&language=en&overview=simplified&steps=true&access_token=pk.eyJ1IjoidGhhaXRoYW5oaGFpIiwiYSI6ImNsOGVwZ2s0bjBpdWQzdnA5c3U5NmVoM3IifQ.h7reW0CjFKe-waithRjc0g`;
+    const media = this.httpService.get(url, requestConfig);
+    const response = media.pipe(
+      map((res) => {
+        return res.data;
+      }),
+    );
+    const result = await lastValueFrom(response);
+
+    return round(result.routes[0].distance / 1000, 2);
+  }
+
+  computeShippingFee(
+    weight: number,
+    address: string,
+    deliveryType: DeliveryType,
+  ) {
+    let price = 0;
+    if (address.includes('Ninh Kiều') || address.includes('Ninh Kieu')) {
+      if (weight < 3) {
+        price = deliveryType.price_inner;
+      } else {
+        price =
+          (weight - 3) * deliveryType.overpriced + deliveryType.price_inner;
+      }
+    } else {
+      if (weight < 3) {
+        price = deliveryType.price_outer;
+      } else {
+        price =
+          (weight - 3) * deliveryType.overpriced + deliveryType.price_outer;
+      }
+    }
+
+    return price;
+  }
+
   async createdOrder(orderDto: OrderDto) {
+    const coordinates = await this.getCoordinates(
+      orderDto.order_address.address,
+    );
+    orderDto.order_address.longitude = coordinates.features[0].center[0];
+    orderDto.order_address.latitude = coordinates.features[0].center[1];
+    const coordinatesDistance = [
+      { lng: this.lngDepot, lat: this.latDepot },
+      {
+        lng: orderDto.order_address.longitude,
+        lat: orderDto.order_address.latitude,
+      },
+    ];
+
+    orderDto.distance = await this.getDistance(coordinatesDistance);
+
     const createdOrder = await this.dataSource.transaction(async (manager) => {
       const orderRepository = manager.getRepository(Order);
       const deliveryTypeRepository = manager.getRepository(DeliveryType);
@@ -96,6 +189,12 @@ export class OrderService {
       const deliveryType = await this.getDeliveryTypeById(
         orderDto.delivery_type_id,
         deliveryTypeRepository,
+      );
+
+      orderDto.shipping_fee = this.computeShippingFee(
+        orderDto.cargo.weight,
+        orderDto.order_address.address,
+        deliveryType,
       );
 
       const supervisor = await this.getSupervisorById(
@@ -120,6 +219,7 @@ export class OrderService {
       orderEntity.receiver_phone = orderDto.receiver_phone;
       orderEntity.shipping_fee = orderDto.shipping_fee;
       orderEntity.note = orderDto.note;
+      orderEntity.distance = orderDto.distance;
       orderEntity.delivery_type = deliveryType;
       orderEntity.supervisor = supervisor;
       orderEntity.cargo = createdCargo;
@@ -132,7 +232,6 @@ export class OrderService {
 
       return createdOrder;
     });
-
     return createdOrder;
   }
 

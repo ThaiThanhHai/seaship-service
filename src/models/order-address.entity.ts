@@ -16,11 +16,11 @@ export class OrderAddress {
   @Column({ length: 255 })
   address: string;
 
-  @Column({ length: 255 })
-  longitude: string;
+  @Column({ type: 'float' })
+  longitude: number;
 
-  @Column({ length: 255 })
-  latitude: string;
+  @Column({ type: 'float' })
+  latitude: number;
 
   @CreateDateColumn({
     type: 'timestamp',

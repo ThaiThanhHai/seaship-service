@@ -1,8 +1,8 @@
 export interface OrderAddressDto {
   readonly id: number;
   address: string;
-  longitude: string;
-  latitude: string;
+  longitude: number;
+  latitude: number;
 }
 
 export interface CargoDto {
@@ -19,6 +19,7 @@ export interface OrderDto {
   receiver_name: string;
   receiver_phone: string;
   shipping_fee: number;
+  distance: number;
   note: string;
   delivery_type_id: number;
   supervisor_id: number;

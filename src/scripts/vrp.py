@@ -7,13 +7,10 @@ import math
 
 
 def haversine(lat1, lon1, lat2, lon2):
-    # distance between latitudes and longitudes
     dLat = (lat2 - lat1) * math.pi / 180.0
     dLon = (lon2 - lon1) * math.pi / 180.0
-
     lat1 = (lat1) * math.pi / 180.0
     lat2 = (lat2) * math.pi / 180.0
-
     a = (pow(math.sin(dLat / 2), 2) +
          pow(math.sin(dLon / 2), 2) *
          math.cos(lat1) * math.cos(lat2))
@@ -80,14 +77,14 @@ def print_solution(data, manager, routing, solution):
 
 
 def main():
-    coordinates = json.loads(sys.argv[1])
-    num_vehicles = json.loads(sys.argv[2])
-    depot = json.loads(sys.argv[3])
-    weight = json.loads(sys.argv[4])
-    vehicle_weight = json.loads(sys.argv[5])
-    dimension = json.loads(sys.argv[6])
-    vehicle_dimension = json.loads(sys.argv[7])
-    max_travel = json.loads(sys.argv[8])
+    # coordinates = json.loads(sys.argv[1])
+    # num_vehicles = json.loads(sys.argv[2])
+    # depot = json.loads(sys.argv[3])
+    # weight = json.loads(sys.argv[4])
+    # vehicle_weight = json.loads(sys.argv[5])
+    # dimension = json.loads(sys.argv[6])
+    # vehicle_dimension = json.loads(sys.argv[7])
+    # max_travel = json.loads(sys.argv[8])
 
     # -0. Cần Thơ 10.03059983729994, 105.7707636173672
     # -1. Vĩnh Long  10.235670148568532, 105.96896163739984
@@ -103,31 +100,31 @@ def main():
     # -11. Trà Vinh 9.940288798870643, 106.34348186585552
     # -12. Hậu Giang 9.71122745324128, 105.53514926478884
 
-    # coordinates = [
-    #     [10.03059983729994, 105.7707636173672],
-    #     [10.235670148568532, 105.96896163739984],
-    #     [10.606770428612812, 106.404010120079],
-    #     [10.366423168311577, 106.0427062978259],
-    #     [10.451089854485828, 105.63255705150969],
-    #     [10.382375162556539, 105.39137281666905],
-    #     [10.014473941214565, 105.08068469821401],
-    #     [9.196707170879417, 105.16244901996315],
-    #     [9.288540632592401, 105.72394672138354],
-    #     [9.601410285482292, 105.94502363289503],
-    #     [10.245331400929652, 106.34430818627477],
-    #     [9.940288798870643, 106.34348186585552],
-    #     [9.71122745324128, 105.53514926478884],
-    # ]
+    coordinates = [
+        [10.031068128021307, 105.77046997694818],
+        [10.235670148568532, 105.96896163739984],
+        [10.606770428612812, 106.404010120079],
+        [10.366423168311577, 106.0427062978259],
+        [10.451089854485828, 105.63255705150969],
+        [10.382375162556539, 105.39137281666905],
+        [10.014473941214565, 105.08068469821401],
+        [9.196707170879417, 105.16244901996315],
+        [9.288540632592401, 105.72394672138354],
+        [9.601410285482292, 105.94502363289503],
+        [10.245331400929652, 106.34430818627477],
+        [9.940288798870643, 106.34348186585552],
+        [9.71122745324128, 105.53514926478884],
+    ]
 
-    # vehicle_weight = [1000, 1000, 1000, 500]
-    # vehicle_dimension = [8.16, 8.16, 8.16, 3.12]
-    # weight = [0, 200, 140, 100, 100, 100, 70,
-    #           100, 100, 100, 100, 0.025, 0.09]
-    # dimension = [0, 0.016, 0.054, 0.01, 0.03, 0.09,
-    #              0.087, 0.15, 0.3, 0.045, 0.12, 0.15, 0.35]
-    # num_vehicles = 4
-    # depot = 0
-    # max_travel = 500
+    vehicle_weight = [1000, 1000, 1000, 500]
+    vehicle_dimension = [8.16, 8.16, 8.16, 3.12]
+    weight = [0, 200, 140, 100, 100, 100, 70,
+              100, 100, 100, 100, 0.025, 0.09]
+    dimension = [0, 0.016, 0.054, 0.01, 0.03, 0.09,
+                 0.087, 0.15, 0.3, 0.045, 0.12, 0.15, 0.35]
+    num_vehicles = 4
+    depot = 0
+    max_travel = 500
 
     distance_matrix = calculate_distance_matrix(coordinates)
 
@@ -145,9 +142,9 @@ def main():
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
         return data['distance_matrix'][from_node][to_node]
-    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
-    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
-    routing.AddDimension(transit_callback_index, 0,
+    transit_index = routing.RegisterTransitCallback(distance_callback)
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_index)
+    routing.AddDimension(transit_index, 0,
                          max_travel, True, 'Distance')
     distance_dimension = routing.GetDimensionOrDie('Distance')
     distance_dimension.SetGlobalSpanCostCoefficient(100)
