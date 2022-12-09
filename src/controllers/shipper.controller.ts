@@ -29,4 +29,30 @@ export class ShipperController {
   deleteShipper(@Body('ids') ids: Array<number>) {
     return this.shipperService.deleteShipper(ids);
   }
+
+  @Get(':id/routing')
+  getDataForRoutingPage(@Param('id') id: string) {
+    return this.shipperService.getDataForRoutingPage(parseInt(id));
+  }
+
+  @Get(':id/order')
+  getOrderForListOrderPage(@Param('id') id: string) {
+    return this.shipperService.getOrderForListOrderPage(parseInt(id));
+  }
+
+  @Get(':shipper_id/order/:order_id')
+  getDetailOrderPage(
+    @Param('shipper_id') shipper_id: string,
+    @Param('order_id') order_id: string,
+  ) {
+    return this.shipperService.getDetailOrderPage(
+      parseInt(shipper_id),
+      parseInt(order_id),
+    );
+  }
+
+  @Get(':id/statistic')
+  getDataStatisticPage(@Param('id') id: string) {
+    return this.shipperService.getDataStatisticPage(parseInt(id));
+  }
 }

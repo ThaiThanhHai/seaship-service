@@ -7,4 +7,5 @@ export interface DeliveryDto {
 
 export interface DeliveryStatusDto {
   status: Status;
+  failure_reason?: string;
 }

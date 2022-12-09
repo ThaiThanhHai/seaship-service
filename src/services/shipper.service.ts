@@ -13,7 +13,8 @@ import { Vehicle } from 'src/models/vehicle.entity';
 // import { Buffer } from 'buffer';
 // import { promises } from 'fs';
 // import { uuid } from 'uuidv4';
-import { isArray } from 'lodash';
+import { isArray, round } from 'lodash';
+import { Delivery } from 'src/models/delivery.entity';
 
 @Injectable()
 export class ShipperService {
@@ -145,5 +146,132 @@ export class ShipperService {
       },
     );
     return createdListofDelivery;
+  }
+
+  async getDataForRoutingPage(id: number) {
+    const shipperRepository = this.dataSource.manager.getRepository(Shipper);
+
+    const firstShipper = await shipperRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: [
+        'delivery',
+        'delivery.order',
+        'delivery.order.cargo',
+        'delivery.order.order_address',
+      ],
+    });
+
+    if (!firstShipper) {
+      throw new NotFoundException('The delivery type id not found');
+    }
+
+    const coordinates = firstShipper.delivery.length
+      ? [
+          { lng: 105.77065821314767, lat: 10.03021894409099 },
+          ...firstShipper.delivery.map((delivery) => {
+            return {
+              lng: delivery.order.order_address.longitude,
+              lat: delivery.order.order_address.latitude,
+            };
+          }),
+          { lng: 105.77065821314767, lat: 10.03021894409099 },
+        ]
+      : [];
+
+    const response = {
+      total_order: firstShipper.delivery.length,
+      total_distance: firstShipper.delivery.length
+        ? firstShipper.delivery[0].distance
+        : 0,
+      total_weight: firstShipper.delivery.length
+        ? round(firstShipper.delivery[0].weight, 0)
+        : 0,
+      coordinates: coordinates,
+    };
+
+    return response;
+  }
+
+  async getOrderForListOrderPage(id: number) {
+    const shipperRepository = this.dataSource.manager.getRepository(Shipper);
+
+    const firstShipper = await shipperRepository.findOne({
+      where: {
+        id: id,
+        delivery: {
+          order: {
+            status: In([Status.DELIVERING]),
+          },
+        },
+      },
+      relations: [
+        'delivery',
+        'delivery.order',
+        'delivery.order.cargo',
+        'delivery.order.order_address',
+      ],
+    });
+
+    if (!firstShipper) {
+      throw new NotFoundException('The delivery type id not found');
+    }
+
+    const response = firstShipper.delivery.map((delivery) => {
+      const data = {
+        id: delivery.order.id,
+        name: delivery.order.cargo.name,
+        address: delivery.order.order_address.address,
+      };
+      return data;
+    });
+
+    return response;
+  }
+
+  async getDetailOrderPage(shipper_id: number, order_id: number) {
+    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+
+    const deliveries = await deliveryRepository.findOne({
+      where: {
+        order: {
+          id: order_id,
+        },
+        shippers: {
+          id: shipper_id,
+        },
+      },
+      relations: ['order', 'order.cargo', 'order.order_address'],
+    });
+
+    const response = {
+      order_name: deliveries.order.cargo.name,
+      receiver_name: deliveries.order.receiver_name,
+      phone: deliveries.order.receiver_phone,
+      shipping_fee: deliveries.order.shipping_fee,
+      address: deliveries.order.order_address.address,
+      coordinate: {
+        lat: deliveries.order.order_address.latitude,
+        lng: deliveries.order.order_address.longitude,
+      },
+    };
+
+    return response;
+  }
+
+  async getDataStatisticPage(id: number) {
+    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+
+    const deliveries = await deliveryRepository.find({
+      where: {
+        shippers: {
+          id: id,
+        },
+      },
+      relations: ['order', 'order.cargo', 'order.order_address'],
+    });
+
+    return deliveries;
   }
 }

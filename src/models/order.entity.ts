@@ -48,6 +48,9 @@ export class Order {
   @Column({ length: 255, nullable: true })
   note: string;
 
+  @Column({ length: 255, nullable: true, default: null })
+  failure_reason: string;
+
   @Column({
     type: 'enum',
     enum: Status,

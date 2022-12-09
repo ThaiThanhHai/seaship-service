@@ -48,9 +48,9 @@ export class DeliveryService {
         };
       });
       const coordinates = [
-        { lng: 105.7875219, lat: 10.0364216 },
+        { lng: 105.77065821314767, lat: 10.03021894409099 },
         ...dataCoord,
-        { lng: 105.7875219, lat: 10.0364216 },
+        { lng: 105.77065821314767, lat: 10.03021894409099 },
       ];
 
       const order_ids = [0, ...data.delivery.map((data) => data.order.id), 0];
@@ -182,6 +182,9 @@ export class DeliveryService {
       },
       relations: ['delivery.shippers'],
     });
+
+    firstOrder.failure_reason =
+      deliveryStatusDto.failure_reason ?? deliveryStatusDto.failure_reason;
 
     const listOrderOfShipper = await this.getDeliveryForShipper(
       firstOrder.delivery.shippers.id.toString(),
