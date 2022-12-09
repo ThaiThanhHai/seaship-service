@@ -6,7 +6,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Repository, DataSource, In, Like, Not } from 'typeorm';
+import { Repository, DataSource, In, LessThan } from 'typeorm';
 import { Order, Status } from '../models/order.entity';
 import {
   OrderDto,
@@ -78,6 +78,7 @@ export class OrderService {
     orderAddressEntity.address = orderAddressDto.address;
     orderAddressEntity.longitude = orderAddressDto.longitude;
     orderAddressEntity.latitude = orderAddressDto.latitude;
+    orderAddressEntity.distance = orderAddressDto.distance;
 
     const createdOrderAddress = orderAddressRepository.save(orderAddressEntity);
 
@@ -177,7 +178,9 @@ export class OrderService {
       },
     ];
 
-    orderDto.distance = await this.getDistance(coordinatesDistance);
+    orderDto.order_address.distance = await this.getDistance(
+      coordinatesDistance,
+    );
 
     const createdOrder = await this.dataSource.transaction(async (manager) => {
       const orderRepository = manager.getRepository(Order);
@@ -219,7 +222,6 @@ export class OrderService {
       orderEntity.receiver_phone = orderDto.receiver_phone;
       orderEntity.shipping_fee = orderDto.shipping_fee;
       orderEntity.note = orderDto.note;
-      orderEntity.distance = orderDto.distance;
       orderEntity.delivery_type = deliveryType;
       orderEntity.supervisor = supervisor;
       orderEntity.cargo = createdCargo;
@@ -263,20 +265,20 @@ export class OrderService {
     };
   }
 
-  async getListOfOrderAtCanTho(filter: Status[]) {
+  async getListOfOrderForTruck(filter: Status[]) {
     let filterValue = filter;
     if (!isArray(filter)) {
       filterValue = [filter];
     }
-    const search = '%Thành phố Cần Thơ';
     const page = 0;
     const limit = 10;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
-        order_address: {
-          address: Like(search),
+        cargo: {
+          dimension: LessThan(1360),
+          weight: LessThan(1000),
         },
       },
       relations: ['order_address', 'cargo'],
@@ -295,20 +297,20 @@ export class OrderService {
     };
   }
 
-  async getListOfOrderNotAtCanTho(filter: Status[]) {
+  async getListOfOrderForMotorBike(filter: Status[]) {
     let filterValue = filter;
     if (!isArray(filter)) {
       filterValue = [filter];
     }
-    const search = '%Thành phố Cần Thơ';
     const page = 0;
     const limit = 10;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
-        order_address: {
-          address: Not(Like(search)),
+        cargo: {
+          dimension: LessThan(56),
+          weight: LessThan(20),
         },
       },
       relations: ['order_address', 'cargo'],

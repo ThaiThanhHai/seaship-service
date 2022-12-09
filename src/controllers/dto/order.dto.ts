@@ -3,6 +3,7 @@ export interface OrderAddressDto {
   address: string;
   longitude: number;
   latitude: number;
+  distance: number;
 }
 
 export interface CargoDto {
@@ -19,7 +20,6 @@ export interface OrderDto {
   receiver_name: string;
   receiver_phone: string;
   shipping_fee: number;
-  distance: number;
   note: string;
   delivery_type_id: number;
   supervisor_id: number;

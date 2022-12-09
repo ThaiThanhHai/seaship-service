@@ -4,6 +4,17 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import numpy as np
 import math
+import haversine
+
+class NpEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -27,7 +38,10 @@ def calculate_distance_matrix(coordinates):
             distances.append(
                 round(haversine(from_node[0], from_node[1], to_node[0], to_node[1]), 2))
         distance_matrix.append(distances)
+
     return distance_matrix
+
+
 
 
 def create_data_model(distance_matrix, num_vehicles, weight, vehicle_weight, dimension, vehicle_dimension, depot, max_travel):
@@ -77,54 +91,23 @@ def print_solution(data, manager, routing, solution):
 
 
 def main():
-    # coordinates = json.loads(sys.argv[1])
-    # num_vehicles = json.loads(sys.argv[2])
-    # depot = json.loads(sys.argv[3])
-    # weight = json.loads(sys.argv[4])
-    # vehicle_weight = json.loads(sys.argv[5])
-    # dimension = json.loads(sys.argv[6])
-    # vehicle_dimension = json.loads(sys.argv[7])
-    # max_travel = json.loads(sys.argv[8])
+    coordinates = json.loads(sys.argv[1])
+    num_vehicles = json.loads(sys.argv[2])
+    depot = json.loads(sys.argv[3])
+    weight = json.loads(sys.argv[4])
+    vehicle_weight = json.loads(sys.argv[5])
+    dimension = json.loads(sys.argv[6])
+    vehicle_dimension = json.loads(sys.argv[7])
+    max_travel = json.loads(sys.argv[8])
 
-    # -0. Cần Thơ 10.03059983729994, 105.7707636173672
-    # -1. Vĩnh Long  10.235670148568532, 105.96896163739984
-    # -2. Long An 10.606770428612812, 106.404010120079
-    # -3. Tiền Giang 10.366423168311577, 106.0427062978259
-    # -4. Đồng Tháp 10.451089854485828, 105.63255705150969
-    # -5. An Giang 10.382375162556539, 105.39137281666905
-    # -6. Kiên Giang 10.014473941214565, 105.08068469821401
-    # -7. Cà Mau 9.196707170879417, 105.16244901996315
-    # -8. Bạc Liệu 9.288540632592401, 105.72394672138354
-    # -9. Sóc Trăng 9.601410285482292, 105.94502363289503
-    # -10. Bến Tre 10.245331400929652, 106.34430818627477
-    # -11. Trà Vinh 9.940288798870643, 106.34348186585552
-    # -12. Hậu Giang 9.71122745324128, 105.53514926478884
-
-    coordinates = [
-        [10.031068128021307, 105.77046997694818],
-        [10.235670148568532, 105.96896163739984],
-        [10.606770428612812, 106.404010120079],
-        [10.366423168311577, 106.0427062978259],
-        [10.451089854485828, 105.63255705150969],
-        [10.382375162556539, 105.39137281666905],
-        [10.014473941214565, 105.08068469821401],
-        [9.196707170879417, 105.16244901996315],
-        [9.288540632592401, 105.72394672138354],
-        [9.601410285482292, 105.94502363289503],
-        [10.245331400929652, 106.34430818627477],
-        [9.940288798870643, 106.34348186585552],
-        [9.71122745324128, 105.53514926478884],
-    ]
-
-    vehicle_weight = [1000, 1000, 1000, 500]
-    vehicle_dimension = [8.16, 8.16, 8.16, 3.12]
-    weight = [0, 200, 140, 100, 100, 100, 70,
-              100, 100, 100, 100, 0.025, 0.09]
-    dimension = [0, 0.016, 0.054, 0.01, 0.03, 0.09,
-                 0.087, 0.15, 0.3, 0.045, 0.12, 0.15, 0.35]
-    num_vehicles = 4
-    depot = 0
-    max_travel = 500
+    # coordinates = [[10.0301,105.7706],[10.0312,105.767],[10.0107,105.739],[9.9928,105.663],[10.0622,105.718]]
+    # num_vehicles = 2
+    # weight = [ 0,0.8,0.5,0.5,1.2]
+    # vehicle_weight = [ 20, 20 ]
+    # dimension = [ 0,16,1.02,1.02,0.5 ]
+    # vehicle_dimension = [ 56, 56 ]
+    # depot = 0
+    # max_travel = 500
 
     distance_matrix = calculate_distance_matrix(coordinates)
 
@@ -153,19 +136,21 @@ def main():
     def weight_callback(from_index):
         from_node = manager.IndexToNode(from_index)
         return data['weight'][from_node]
-    weight_callback_index = routing.RegisterUnaryTransitCallback(
+    weight_index = routing.RegisterUnaryTransitCallback(
         weight_callback)
     routing.AddDimensionWithVehicleCapacity(
-        weight_callback_index, 0, data['vehicle_weight'], True, 'Weight')
+        weight_index, 0, data['vehicle_weight'], True, 'Weight')
+    # distance_dimension = routing.GetDimensionOrDie('Weight')
+    # distance_dimension.SetGlobalSpanCostCoefficient(100)
 
     # Add Dimension constraint.
     def dimension_callback(from_index):
         from_node = manager.IndexToNode(from_index)
         return data['dimension'][from_node]
-    dimension_callback_index = routing.RegisterUnaryTransitCallback(
+    dimension_index = routing.RegisterUnaryTransitCallback(
         dimension_callback)
     routing.AddDimensionWithVehicleCapacity(
-        dimension_callback_index, 0, data['vehicle_dimension'], True, 'Dimension')
+        dimension_index, 0, data['vehicle_dimension'], True, 'Dimension')
 
     # Setting first solution heuristic.
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
@@ -181,8 +166,7 @@ def main():
     # Print solution on console.
     if solution:
         vehicle_routes = print_solution(data, manager, routing, solution)
-        print(json.dumps(vehicle_routes))
-        # print(vehicle_routes)
+        print(json.dumps(vehicle_routes, cls=NpEncoder))
     else:
         print(json.dumps("No solution found"))
 

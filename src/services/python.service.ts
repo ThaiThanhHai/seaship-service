@@ -8,22 +8,22 @@ export class PythonService {
     const options: Options = {
       mode: 'json',
       pythonPath:
-        'C:/Users/Admin/AppData/Local/Programs/Python/Python39/python.exe',
+        'C:/Users/User/AppData/Local/Programs/Python/Python39/python.exe',
       scriptPath: './src/scripts',
       pythonOptions: ['-u'],
       args: [
         JSON.stringify(vrpDto.coordinates),
         JSON.stringify(vrpDto.num_vehicles),
         JSON.stringify(vrpDto.depot),
-        JSON.stringify(vrpDto.weights),
-        JSON.stringify(vrpDto.vehicle_capacities),
-        JSON.stringify(vrpDto.dimensions),
-        JSON.stringify(vrpDto.vehicle_dimensions),
+        JSON.stringify(vrpDto.weight),
+        JSON.stringify(vrpDto.vehicle_weight),
+        JSON.stringify(vrpDto.dimension),
+        JSON.stringify(vrpDto.vehicle_dimension),
         JSON.stringify(vrpDto.max_travel),
       ],
     };
 
-    PythonShell.run('vrp.py', options, function (err, schedule) {
+    PythonShell.run('cvrp.py', options, function (err, schedule) {
       if (err) throw new InternalServerErrorException(err);
       res.json(schedule[0]);
     });

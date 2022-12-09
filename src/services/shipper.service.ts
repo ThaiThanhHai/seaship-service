@@ -56,12 +56,12 @@ export class ShipperService {
 
         const vehicleEntity = new Vehicle();
         vehicleEntity.name = 'motorbike';
-        vehicleEntity.dimension = 250;
-        vehicleEntity.capacity = 50;
+        vehicleEntity.dimension = 56;
+        vehicleEntity.capacity = 20;
 
         if (shipperDto.vehicle === 'truck') {
           vehicleEntity.name = 'truck';
-          vehicleEntity.dimension = 8000;
+          vehicleEntity.dimension = 1360;
           vehicleEntity.capacity = 1000;
         }
         const createdVehicle = await vehicleRepository.save(vehicleEntity);

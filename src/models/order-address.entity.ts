@@ -17,6 +17,9 @@ export class OrderAddress {
   address: string;
 
   @Column({ type: 'float' })
+  distance: number;
+
+  @Column({ type: 'float' })
   longitude: number;
 
   @Column({ type: 'float' })

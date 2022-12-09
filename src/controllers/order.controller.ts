@@ -15,14 +15,14 @@ export class OrderController {
     return this.orderService.getListOfOrder(filter);
   }
 
-  @Get('cantho')
-  public getListOfOrderAtCanTho(@Query('filter') filter: Status[]) {
-    return this.orderService.getListOfOrderAtCanTho(filter);
+  @Get('truck')
+  public getListOfOrderForTruck(@Query('filter') filter: Status[]) {
+    return this.orderService.getListOfOrderForTruck(filter);
   }
 
-  @Get('not_cantho')
-  public getListOfOrderNotAtCanTho(@Query('filter') filter: Status[]) {
-    return this.orderService.getListOfOrderNotAtCanTho(filter);
+  @Get('motorbike')
+  public getListOfOrderForMotorBike(@Query('filter') filter: Status[]) {
+    return this.orderService.getListOfOrderForMotorBike(filter);
   }
 
   @Get(':id')

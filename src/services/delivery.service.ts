@@ -10,7 +10,6 @@ import { lastValueFrom, map } from 'rxjs';
 import { Delivery } from 'src/models/delivery.entity';
 import { Status } from 'src/models/order.entity';
 import { Status as ShipperStatus } from 'src/models/shipper.entity';
-import { sum, round } from 'lodash';
 
 @Injectable()
 export class DeliveryService {
@@ -26,27 +25,53 @@ export class DeliveryService {
       where: {
         status: In([Status.DELIVERING]),
       },
-      relations: ['vehicle', 'delivery', 'delivery.order'],
+      relations: [
+        'vehicle',
+        'delivery',
+        'delivery.order',
+        'delivery.order.order_address',
+      ],
       order: {
         created_at: 'DESC',
       },
     });
     const response = [];
     listOfShipper.forEach((data) => {
-      const totalWeight = sum(data.delivery.map((item) => item.weight));
-      const totalDimension = sum(data.delivery.map((item) => item.dimension));
-      const totalDistance = sum(data.delivery.map((item) => item.distance));
+      const totalWeight = data.delivery.map((item) => item.weight);
+      const totalDimension = data.delivery.map((item) => item.dimension);
+      const totalDistance = data.delivery.map((item) => item.distance);
       const count = data.delivery.length;
+      const dataCoord = data.delivery.map((data) => {
+        return {
+          lat: data.order.order_address.latitude,
+          lng: data.order.order_address.longitude,
+        };
+      });
+      const coordinates = [
+        { lng: 105.7875219, lat: 10.0364216 },
+        ...dataCoord,
+        { lng: 105.7875219, lat: 10.0364216 },
+      ];
+
+      const order_ids = [0, ...data.delivery.map((data) => data.order.id), 0];
+      const address = [
+        'Kho hàng (CTU)',
+        ...data.delivery.map((data) => data.order.order_address.address),
+        'Kho hàng (CTU)',
+      ];
       response.push({
         id: data.id,
         name: data.name,
-        totalWeight: round(totalWeight, 2),
+        totalWeight: totalWeight[0],
         maxWeight: data.vehicle.capacity,
-        totalDimension: round(totalDimension, 2),
+        totalDimension: totalDimension[0],
         maxDimension: data.vehicle.dimension,
-        totalDistance: round(totalDistance / 1000, 2),
+        totalDistance: totalDistance[0],
         count: count,
         vehicle: data.vehicle.name,
+        coordinates: coordinates,
+        order_ids: order_ids,
+        address: address,
       });
     });
 
@@ -221,7 +246,7 @@ export class DeliveryService {
 
   private parseCordinates(listOfOrder: Order[]) {
     // Default depot location: Can Tho University
-    const locateDepot = [10.030113295509345, 105.77061529689202];
+    const locateDepot = [10.0301, 105.7706];
     const coordinates: number[][] = [locateDepot];
     listOfOrder.map((firstOrder) => {
       coordinates.push([
@@ -251,12 +276,12 @@ export class DeliveryService {
     return dimensions;
   }
 
-  private parseVehicleCapacities(listOfShipper: Shipper[]) {
-    const vehicleCapacities: number[] = [];
+  private parseVehicleWeights(listOfShipper: Shipper[]) {
+    const vehicleWeights: number[] = [];
     listOfShipper.map((firstOrder) => {
-      vehicleCapacities.push(firstOrder.vehicle.capacity);
+      vehicleWeights.push(firstOrder.vehicle.capacity);
     });
-    return vehicleCapacities;
+    return vehicleWeights;
   }
 
   private parseVehicleDimensions(listOfShipper: Shipper[]) {
@@ -270,9 +295,9 @@ export class DeliveryService {
   private async getVehicleRouting(
     coordinates: number[][],
     num_vehicles: number,
-    weights: number[],
+    weight: number[],
     vehicle_weight: number[],
-    dimensions: number[],
+    dimension: number[],
     vehicle_dimension: number[],
     depot: number,
     max_travel: number,
@@ -289,9 +314,9 @@ export class DeliveryService {
       {
         coordinates,
         num_vehicles,
-        weights,
+        weight,
         vehicle_weight,
-        dimensions,
+        dimension,
         vehicle_dimension,
         depot,
         max_travel,
@@ -316,19 +341,11 @@ export class DeliveryService {
     const result = [];
     schedule.forEach((value, shipper) => {
       const routes = value.route.filter((firstOrder: any) => firstOrder !== 0);
-      const weights = value.weights.filter(
-        (firstOrder: any) => firstOrder !== 0,
-      );
-      value.distances.pop();
-      const distances = value.distances;
-      const dimensions = value.dimensions.filter(
-        (firstOrder: any) => firstOrder !== 0,
-      );
-      routes.forEach((order: any, index: any) => {
+      routes.forEach((order: any) => {
         const data = {
-          distance: distances[index],
-          weight: weights[index],
-          dimension: dimensions[index],
+          distance: value.total_distance,
+          weight: value.total_weight,
+          dimension: value.total_dimension,
           shippers: listOfShipper[shipper],
           order: listOfOrder[order - 1],
         };
@@ -375,7 +392,7 @@ export class DeliveryService {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
-    const vehicle_weight = this.parseVehicleCapacities(listOfShipper);
+    const vehicle_weight = this.parseVehicleWeights(listOfShipper);
     const vehicle_dimension = this.parseVehicleDimensions(listOfShipper);
     const coordinates = this.parseCordinates(listOfOrder);
     const weights = this.parseWeight(listOfOrder);
@@ -409,21 +426,21 @@ export class DeliveryService {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
-    const vehicle_capacities = this.parseVehicleCapacities(listOfShipper);
-    const vehicle_dimensions = this.parseVehicleDimensions(listOfShipper);
+    const vehicle_weight = this.parseVehicleWeights(listOfShipper);
+    const vehicle_dimension = this.parseVehicleDimensions(listOfShipper);
     const coordinates = this.parseCordinates(listOfOrder);
     const weights = this.parseWeight(listOfOrder);
     const dimensions = this.parseDimension(listOfOrder);
     const depot = 0;
-    const max_travel = 100000;
+    const max_travel = 500;
 
     const schedule = await this.getVehicleRouting(
       coordinates,
       num_vehicles,
       weights,
-      vehicle_capacities,
+      vehicle_weight,
       dimensions,
-      vehicle_dimensions,
+      vehicle_dimension,
       depot,
       max_travel,
     );
