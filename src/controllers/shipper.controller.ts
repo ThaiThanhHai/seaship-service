@@ -55,4 +55,9 @@ export class ShipperController {
   getDataStatisticPage(@Param('id') id: string) {
     return this.shipperService.getDataStatisticPage(parseInt(id));
   }
+
+  @Get(':id/history')
+  getHistoryOrderPage(@Param('id') id: string) {
+    return this.shipperService.getHistoryOrderPage(parseInt(id));
+  }
 }

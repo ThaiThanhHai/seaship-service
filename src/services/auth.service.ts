@@ -16,8 +16,10 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const shipperRepository = this.dataSource.manager.getRepository(Shipper);
-    const firstShipper = await shipperRepository.findOneBy({
-      phone: loginDto.phone,
+    const firstShipper = await shipperRepository.findOne({
+      where: {
+        phone: loginDto.phone,
+      },
     });
 
     if (!firstShipper) {

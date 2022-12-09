@@ -1,4 +1,5 @@
 import { Shipper, Status } from '../models/shipper.entity';
+import { Status as StatusOrder } from 'src/models/order.entity';
 import { ShipperDto } from '../controllers/dto/shipper.dto';
 import {
   BadRequestException,
@@ -13,7 +14,7 @@ import { Vehicle } from 'src/models/vehicle.entity';
 // import { Buffer } from 'buffer';
 // import { promises } from 'fs';
 // import { uuid } from 'uuidv4';
-import { isArray, round } from 'lodash';
+import { isArray, round, sum, uniqBy } from 'lodash';
 import { Delivery } from 'src/models/delivery.entity';
 
 @Injectable()
@@ -272,6 +273,69 @@ export class ShipperService {
       relations: ['order', 'order.cargo', 'order.order_address'],
     });
 
-    return deliveries;
+    const weight = sum(
+      uniqBy(deliveries, (e) => e.weight).map((e) => e.weight),
+    );
+    const distance = sum(
+      uniqBy(deliveries, (e) => e.distance).map((e) => e.distance),
+    );
+    const fee = sum(deliveries.map((e) => e.order.shipping_fee));
+
+    const count_delivering = sum(
+      deliveries.map((e) => e.order.status === 'delivering'),
+    );
+
+    const count_finised = sum(
+      deliveries.map((e) => e.order.status === 'finished'),
+    );
+
+    const count_error = sum(deliveries.map((e) => e.order.status === 'error'));
+
+    console.log('count_delivering', count_delivering);
+    console.log('count_error', count_error);
+    console.log('count_finised', count_finised);
+
+    const response = {
+      total_order: deliveries.length,
+      total_weight: weight,
+      total_distance: distance,
+      total_fee: fee,
+      count_delivering,
+      count_error,
+      count_finised,
+    };
+
+    return response;
+  }
+
+  async getHistoryOrderPage(id: number) {
+    const deliveryRepository = this.dataSource.manager.getRepository(Delivery);
+
+    const deliveries = await deliveryRepository.find({
+      where: {
+        shippers: {
+          id: id,
+        },
+        order: {
+          status: In([StatusOrder.FINISHED, StatusOrder.ERROR]),
+        },
+      },
+      relations: ['order', 'order.cargo', 'order.order_address'],
+    });
+
+    const response = [];
+
+    deliveries.length &&
+      deliveries.map((delivery) => {
+        const data = {
+          name: delivery.order.cargo.name,
+          time: delivery.order.updated_at.toLocaleDateString(),
+          status: delivery.order.status,
+          fee: delivery.order.shipping_fee,
+        };
+        response.push(data);
+      });
+
+    return response;
   }
 }
