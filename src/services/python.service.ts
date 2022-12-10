@@ -7,8 +7,10 @@ export class PythonService {
   getVehicleRouting(vrpDto: VrpDto, res) {
     const options: Options = {
       mode: 'json',
+      // pythonPath:
+      //   'C:/Users/User/AppData/Local/Programs/Python/Python39/python.exe',
       pythonPath:
-        'C:/Users/User/AppData/Local/Programs/Python/Python39/python.exe',
+        'C:/Users/Admin/AppData/Local/Programs/Python/Python39/python.exe',
       scriptPath: './src/scripts',
       pythonOptions: ['-u'],
       args: [
