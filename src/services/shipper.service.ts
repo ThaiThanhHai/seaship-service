@@ -162,6 +162,11 @@ export class ShipperService {
     const firstShipper = await shipperRepository.findOne({
       where: {
         id: id,
+        delivery: {
+          order: {
+            status: In([Status.DELIVERING]),
+          },
+        },
       },
       relations: [
         'delivery',
@@ -194,7 +199,7 @@ export class ShipperService {
         ? firstShipper.delivery[0].distance
         : 0,
       total_weight: firstShipper.delivery.length
-        ? round(firstShipper.delivery[0].weight, 0)
+        ? round(firstShipper.delivery[0].weight, 1)
         : 0,
       coordinates: coordinates,
     };
@@ -280,9 +285,7 @@ export class ShipperService {
       relations: ['order', 'order.cargo', 'order.order_address'],
     });
 
-    const weight = sum(
-      uniqBy(deliveries, (e) => e.weight).map((e) => e.weight),
-    );
+    const dimension = sum(deliveries.map((e) => e.dimension));
     const distance = sum(
       uniqBy(deliveries, (e) => e.distance).map((e) => e.distance),
     );
@@ -300,9 +303,9 @@ export class ShipperService {
 
     const response = {
       total_order: deliveries.length,
-      total_weight: weight,
-      total_distance: distance,
-      total_fee: fee,
+      total_dimension: round(dimension, 2),
+      total_distance: round(distance, 2),
+      total_fee: round(fee, 2),
       count_delivering,
       count_error,
       count_finised,
