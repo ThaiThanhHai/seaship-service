@@ -19,6 +19,13 @@ import { isArray } from 'lodash';
 import { lastValueFrom, map } from 'rxjs';
 import { HttpService } from '@nestjs/axios/dist';
 import { round } from 'lodash';
+import { Base64Str } from 'src/controllers/dto/base64.dto';
+import * as fileType from 'file-type';
+import * as path from 'path';
+import { Buffer } from 'buffer';
+import { promises } from 'fs';
+import { uuid } from 'uuidv4';
+import * as XLSX from 'xlsx';
 
 @Injectable()
 export class OrderService {
@@ -237,13 +244,189 @@ export class OrderService {
     return createdOrder;
   }
 
+  async createFileExcel(data: string) {
+    const buf = Buffer.from(data, 'base64');
+    const type = await fileType.fromBuffer(buf);
+    const fileName = uuid();
+
+    const filePath = path.join(
+      __dirname,
+      `../../resources/${fileName}.${type.ext}`,
+    );
+
+    await promises.writeFile(filePath, buf);
+
+    return filePath;
+  }
+
+  async createOrderByFileExcel(base64Str: Base64Str) {
+    const url = await this.createFileExcel(base64Str.data);
+
+    const workbook = XLSX.readFile(url);
+
+    const data = [];
+
+    const sheets = workbook.SheetNames;
+
+    for (let i = 0; i < sheets.length; i++) {
+      const temp = XLSX.utils.sheet_to_json(
+        workbook.Sheets[workbook.SheetNames[i]],
+        { range: 1 },
+      );
+
+      temp.forEach((res) => {
+        data.push(res);
+      });
+    }
+    const deliveryTypeRepository =
+      this.dataSource.manager.getRepository(DeliveryType);
+
+    const values =
+      data &&
+      Promise.all(
+        data.map(async (item) => {
+          const dimensions = item['Trọng lượng vận chuyển']
+            .toString()
+            .split('x');
+
+          if (
+            dimensions.length !== 3 ||
+            isNaN(Number(dimensions[0])) ||
+            isNaN(Number(dimensions[1])) ||
+            isNaN(Number(dimensions[2]))
+          ) {
+            throw new BadRequestException(
+              'Dimensions must be chieudai x chieurong x chieucao',
+            );
+          }
+          const dimension = round(
+            (dimensions[0] * dimensions[1] * dimensions[2]) / 6000,
+            2,
+          );
+
+          const deliveryType = await deliveryTypeRepository.findOne({
+            where: {
+              name: item['Hình thức vận chuyển'],
+            },
+          });
+
+          if (!deliveryType) {
+            throw new BadRequestException('Not found delivery type');
+          }
+
+          const coordinates = await this.getCoordinates(
+            item['Địa chỉ giao hàng'],
+          );
+          const coordinatesDistance = [
+            { lng: this.lngDepot, lat: this.latDepot },
+            {
+              lng: coordinates.features[0].center[0],
+              lat: coordinates.features[0].center[1],
+            },
+          ];
+          const res = {
+            sender_name: item['Tên người gửi'],
+            sender_phone: `0${item['SĐT người gửi']}`,
+            receiver_name: item['Tên người nhận'],
+            receiver_phone: `0${item['SĐT người nhận']}`,
+            shipping_fee: this.computeShippingFee(
+              dimension,
+              item['Địa chỉ giao hàng'],
+              deliveryType,
+            ),
+            note: item['Ghi chú'],
+            delivery_type_id: deliveryType.id,
+            supervisor_id: base64Str.supervisor_id,
+            cargo: {
+              name: item['Tên đơn hàng'] as string,
+              dimension: dimension,
+              weight: item['Trọng lượng thực tế'] as number,
+            } as CargoDto,
+            order_address: {
+              address: item['Địa chỉ giao hàng'],
+              longitude: coordinates.features[0].center[0],
+              latitude: coordinates.features[0].center[1],
+              distance: await this.getDistance(coordinatesDistance),
+            } as OrderAddressDto,
+          };
+          return res;
+        }),
+      );
+
+    const createdOrders =
+      values &&
+      Promise.all(
+        (await values).map(async (value) => {
+          const createdOrder = await this.dataSource.transaction(
+            async (manager) => {
+              const orderRepository = manager.getRepository(Order);
+              const deliveryTypeRepository =
+                manager.getRepository(DeliveryType);
+              const cargoRepository = manager.getRepository(Cargo);
+              const orderAddressRepository =
+                manager.getRepository(OrderAddress);
+              const supervisorRepository = manager.getRepository(Supervisor);
+
+              const deliveryType = await this.getDeliveryTypeById(
+                value.delivery_type_id,
+                deliveryTypeRepository,
+              );
+
+              value.shipping_fee = this.computeShippingFee(
+                value.cargo.weight,
+                value.order_address.address,
+                deliveryType,
+              );
+
+              const supervisor = await this.getSupervisorById(
+                value.supervisor_id,
+                supervisorRepository,
+              );
+
+              const createdCargo = await this.createCargo(
+                value.cargo,
+                cargoRepository,
+              );
+
+              const createdOrderAddress = await this.createOrderAddress(
+                value.order_address,
+                orderAddressRepository,
+              );
+
+              const orderEntity = new Order();
+              orderEntity.sender_name = value.sender_name;
+              orderEntity.sender_phone = value.sender_phone;
+              orderEntity.receiver_name = value.receiver_name;
+              orderEntity.receiver_phone = value.receiver_phone;
+              orderEntity.shipping_fee = value.shipping_fee;
+              orderEntity.note = value.note;
+              orderEntity.delivery_type = deliveryType;
+              orderEntity.supervisor = supervisor;
+              orderEntity.cargo = createdCargo;
+              orderEntity.order_address = createdOrderAddress;
+              orderEntity.delivery_time = this.parseDeliveryTime(
+                deliveryType.delivery_days,
+              );
+
+              const createdOrder = await orderRepository.save(orderEntity);
+
+              return createdOrder;
+            },
+          );
+          return createdOrder;
+        }),
+      );
+
+    return createdOrders;
+  }
+
   async getListOfOrder(filter: Status[]) {
     let filterValue = filter;
     if (!isArray(filter)) {
       filterValue = [filter];
     }
     const page = 0;
-    const limit = 10;
+    const limit = 100;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {

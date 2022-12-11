@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
 import { Status } from 'src/models/order.entity';
 import { OrderService } from 'src/services/order.service';
 import { OrderDto } from '../controllers/dto/order.dto';
+import { Base64Str } from './dto/base64.dto';
 
 @Controller('orders')
 export class OrderController {
@@ -10,6 +11,12 @@ export class OrderController {
   createOrder(@Body() orderDto: OrderDto) {
     return this.orderService.createdOrder(orderDto);
   }
+
+  @Post('file_excel')
+  createOrderByFileExcel(@Body() base64Str: Base64Str) {
+    return this.orderService.createOrderByFileExcel(base64Str);
+  }
+
   @Get()
   public getListOfOrder(@Query('filter') filter: Status[]) {
     return this.orderService.getListOfOrder(filter);

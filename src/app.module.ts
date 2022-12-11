@@ -35,7 +35,7 @@ import { AuthService } from './services/auth.service';
         password: 'password',
         database: 'seaship_dev',
         entities: [`dist/models/*{.ts,.js}`],
-        synchronize: false,
+        synchronize: true,
       }),
     }),
     HttpModule,
