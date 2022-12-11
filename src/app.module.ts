@@ -18,6 +18,8 @@ import { ShipperService } from './services/shipper.service';
 import { PythonController } from './controllers/python.controller';
 import { AuthController } from './controllers/auth.controller';
 import { AuthService } from './services/auth.service';
+import { DashboardController } from './controllers/dashboard.controller';
+import { DashboardService } from './services/dashboard.service';
 
 @Module({
   imports: [
@@ -48,6 +50,7 @@ import { AuthService } from './services/auth.service';
     DeliveryController,
     PythonController,
     AuthController,
+    DashboardController,
   ],
   providers: [
     AppService,
@@ -57,6 +60,7 @@ import { AuthService } from './services/auth.service';
     ShipperService,
     DeliveryService,
     AuthService,
+    DashboardService,
   ],
 })
 export class AppModule {}
