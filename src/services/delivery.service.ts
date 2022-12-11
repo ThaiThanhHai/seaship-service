@@ -10,6 +10,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { Delivery } from 'src/models/delivery.entity';
 import { Status } from 'src/models/order.entity';
 import { Status as ShipperStatus } from 'src/models/shipper.entity';
+import { sum } from 'lodash';
 
 @Injectable()
 export class DeliveryService {
@@ -36,7 +37,9 @@ export class DeliveryService {
     const response = [];
     listOfShipper.forEach((data) => {
       const statusOrder = data.delivery.map((item) => item.order.status);
-      const totalWeight = data.delivery.map((item) => item.weight);
+      const totalFee = sum(
+        data.delivery.map((item) => item.order.shipping_fee),
+      );
       const totalDimension = data.delivery.map((item) => item.dimension);
       const totalDistance = data.delivery.map((item) => item.distance);
       const count = data.delivery.length;
@@ -62,7 +65,7 @@ export class DeliveryService {
       response.push({
         id: data.id,
         name: data.name,
-        totalWeight: totalWeight[0],
+        totalFee: totalFee,
         maxWeight: data.vehicle.capacity,
         totalDimension: totalDimension[0],
         maxDimension: data.vehicle.dimension,
