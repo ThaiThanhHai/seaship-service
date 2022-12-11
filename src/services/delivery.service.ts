@@ -23,7 +23,7 @@ export class DeliveryService {
 
     const [listOfShipper] = await shipperRepository.findAndCount({
       where: {
-        status: In([Status.DELIVERING]),
+        status: In([ShipperStatus.DELIVERING]),
       },
       relations: [
         'vehicle',
@@ -31,12 +31,11 @@ export class DeliveryService {
         'delivery.order',
         'delivery.order.order_address',
       ],
-      order: {
-        created_at: 'DESC',
-      },
     });
+
     const response = [];
     listOfShipper.forEach((data) => {
+      const statusOrder = data.delivery.map((item) => item.order.status);
       const totalWeight = data.delivery.map((item) => item.weight);
       const totalDimension = data.delivery.map((item) => item.dimension);
       const totalDistance = data.delivery.map((item) => item.distance);
@@ -59,6 +58,7 @@ export class DeliveryService {
         ...data.delivery.map((data) => data.order.order_address.address),
         'Kho hàng (CTU)',
       ];
+
       response.push({
         id: data.id,
         name: data.name,
@@ -72,6 +72,7 @@ export class DeliveryService {
         coordinates: coordinates,
         order_ids: order_ids,
         address: address,
+        status: statusOrder,
       });
     });
 
@@ -153,9 +154,6 @@ export class DeliveryService {
         id: parseInt(order_id),
       },
       relations: ['cargo', 'order_address', 'delivery', 'delivery_type'],
-      order: {
-        created_at: 'DESC',
-      },
     });
 
     const data = {
@@ -298,8 +296,6 @@ export class DeliveryService {
   private async getVehicleRouting(
     coordinates: number[][],
     num_vehicles: number,
-    weight: number[],
-    vehicle_weight: number[],
     dimension: number[],
     vehicle_dimension: number[],
     depot: number,
@@ -317,8 +313,6 @@ export class DeliveryService {
       {
         coordinates,
         num_vehicles,
-        weight,
-        vehicle_weight,
         dimension,
         vehicle_dimension,
         depot,
@@ -347,7 +341,6 @@ export class DeliveryService {
       routes.forEach((order: any) => {
         const data = {
           distance: value.total_distance,
-          weight: value.total_weight,
           dimension: value.total_dimension,
           shippers: listOfShipper[shipper],
           order: listOfOrder[order - 1],
@@ -369,8 +362,8 @@ export class DeliveryService {
           listOfDelivery.map(async (delivery: any) => {
             const deliveryEntity = new Delivery();
             deliveryEntity.distance = delivery.distance;
-            deliveryEntity.weight = delivery.weight;
-            deliveryEntity.dimension = delivery.dimension;
+            deliveryEntity.weight = delivery.order.cargo.weight;
+            deliveryEntity.dimension = delivery.order.cargo.dimension;
             deliveryEntity.date = new Date();
             deliveryEntity.order = delivery.order;
             deliveryEntity.shippers = delivery.shippers;
@@ -395,10 +388,8 @@ export class DeliveryService {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
-    const vehicle_weight = this.parseVehicleWeights(listOfShipper);
     const vehicle_dimension = this.parseVehicleDimensions(listOfShipper);
     const coordinates = this.parseCordinates(listOfOrder);
-    const weights = this.parseWeight(listOfOrder);
     const dimensions = this.parseDimension(listOfOrder);
     const depot = 0;
     const max_travel = 500000;
@@ -406,8 +397,6 @@ export class DeliveryService {
     const schedule = await this.getVehicleRouting(
       coordinates,
       num_vehicles,
-      weights,
-      vehicle_weight,
       dimensions,
       vehicle_dimension,
       depot,
@@ -429,10 +418,8 @@ export class DeliveryService {
     const listOfOrder = await this.getOrderByIds(deliveryDto.list_order);
     const listOfShipper = await this.getShipperByIds(deliveryDto.list_shipper);
     const num_vehicles = listOfShipper.length;
-    const vehicle_weight = this.parseVehicleWeights(listOfShipper);
     const vehicle_dimension = this.parseVehicleDimensions(listOfShipper);
     const coordinates = this.parseCordinates(listOfOrder);
-    const weights = this.parseWeight(listOfOrder);
     const dimensions = this.parseDimension(listOfOrder);
     const depot = 0;
     const max_travel = 500;
@@ -440,8 +427,6 @@ export class DeliveryService {
     const schedule = await this.getVehicleRouting(
       coordinates,
       num_vehicles,
-      weights,
-      vehicle_weight,
       dimensions,
       vehicle_dimension,
       depot,

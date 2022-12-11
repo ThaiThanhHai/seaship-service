@@ -425,24 +425,18 @@ export class OrderService {
     if (!isArray(filter)) {
       filterValue = [filter];
     }
-    const page = 0;
-    const limit = 100;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
       },
-      relations: ['order_address', 'cargo'],
+      relations: ['order_address', 'cargo', 'delivery.shippers'],
       order: {
         created_at: 'DESC',
       },
-      skip: page,
-      take: limit,
     });
 
     return {
-      page: page,
-      limit: limit,
       total: count,
       orders: listOfOrders,
     };
@@ -454,7 +448,7 @@ export class OrderService {
       filterValue = [filter];
     }
     const page = 0;
-    const limit = 10;
+    const limit = 100;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
@@ -486,13 +480,13 @@ export class OrderService {
       filterValue = [filter];
     }
     const page = 0;
-    const limit = 10;
+    const limit = 100;
     const orderRepository = this.dataSource.manager.getRepository(Order);
     const [listOfOrders, count] = await orderRepository.findAndCount({
       where: {
         status: filter ? In(filterValue) : undefined,
         cargo: {
-          dimension: LessThan(56),
+          dimension: LessThan(40),
           weight: LessThan(20),
         },
       },

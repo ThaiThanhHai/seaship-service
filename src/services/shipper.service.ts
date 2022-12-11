@@ -58,22 +58,29 @@ export class ShipperService {
 
         const vehicleEntity = new Vehicle();
         vehicleEntity.name = 'motorbike';
-        vehicleEntity.dimension = 56;
+        vehicleEntity.dimension = 40;
         vehicleEntity.capacity = 20;
 
         if (shipperDto.vehicle === 'truck') {
           vehicleEntity.name = 'truck';
-          vehicleEntity.dimension = 1360;
-          vehicleEntity.capacity = 1000;
+          vehicleEntity.dimension = 520;
+          vehicleEntity.capacity = 500;
         }
         const createdVehicle = await vehicleRepository.save(vehicleEntity);
+
+        const listAvatar = [
+          'https://i.imgur.com/YThWRvo.png',
+          'https://i.imgur.com/JHvPwHY.png',
+          'https://i.imgur.com/8RwsfL0.png',
+        ];
+
+        const random = Math.floor(Math.random() * listAvatar.length);
 
         const shipperEntity = new Shipper();
         shipperEntity.name = shipperDto.name;
         shipperEntity.email = shipperDto.email;
         shipperEntity.phone = shipperDto.phone;
-        shipperEntity.avatar =
-          'http://localhost:3000/resources/47a4e00b-a0d2-406f-9199-d32f5f7dc404.png';
+        shipperEntity.avatar = listAvatar[random];
         shipperEntity.vehicle = createdVehicle;
 
         const createdShipper = await shipperRepository.save(shipperEntity);
@@ -290,10 +297,6 @@ export class ShipperService {
     );
 
     const count_error = sum(deliveries.map((e) => e.order.status === 'error'));
-
-    console.log('count_delivering', count_delivering);
-    console.log('count_error', count_error);
-    console.log('count_finised', count_finised);
 
     const response = {
       total_order: deliveries.length,

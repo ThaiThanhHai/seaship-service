@@ -44,13 +44,11 @@ def calculate_distance_matrix(coordinates):
 
 
 
-def create_data_model(distance_matrix, num_vehicles, weight, vehicle_weight, dimension, vehicle_dimension, depot, max_travel):
+def create_data_model(distance_matrix, num_vehicles,dimension, vehicle_dimension, depot, max_travel):
     data = {}
     data['distance_matrix'] = distance_matrix
     data['num_vehicles'] = num_vehicles
-    data['vehicle_weight'] = vehicle_weight
     data['vehicle_dimension'] = vehicle_dimension
-    data['weight'] = weight
     data['dimension'] = dimension
     data['depot'] = depot
     data['max_travel'] = max_travel
@@ -62,13 +60,11 @@ def print_solution(data, manager, routing, solution):
     for vehicle_id in range(data['num_vehicles']):
         index = routing.Start(vehicle_id)
         route_distance = []
-        route_weight = []
         route_dimension = []
         routes = []
         while not routing.IsEnd(index):
             node_index = manager.IndexToNode(index)
             route = format(manager.IndexToNode(index))
-            route_weight.append(data['weight'][node_index])
             route_dimension.append(data['dimension'][node_index])
             previous_index = index
             routes.append(int(route))
@@ -80,11 +76,9 @@ def print_solution(data, manager, routing, solution):
         result.append({
             "route": routes,
             "distances": route_distance,
-            "total_distance": np.sum(route_distance),
-            "weights": route_weight,
-            "total_weight": np.sum(route_weight),
+            "total_distance": round(np.sum(route_distance),2),
             "dimensions": route_dimension,
-            "total_dimension": np.sum(route_dimension),
+            "total_dimension": round(np.sum(route_dimension), 2),
         })
 
     return result
@@ -94,25 +88,20 @@ def main():
     coordinates = json.loads(sys.argv[1])
     num_vehicles = json.loads(sys.argv[2])
     depot = json.loads(sys.argv[3])
-    weight = json.loads(sys.argv[4])
-    vehicle_weight = json.loads(sys.argv[5])
-    dimension = json.loads(sys.argv[6])
-    vehicle_dimension = json.loads(sys.argv[7])
-    max_travel = json.loads(sys.argv[8])
+    dimension = json.loads(sys.argv[4])
+    vehicle_dimension = json.loads(sys.argv[5])
+    max_travel = json.loads(sys.argv[6])
 
-    # coordinates = [[10.0301,105.7706],[10.0312,105.767],[10.0107,105.739],[9.9928,105.663],[10.0622,105.718]]
-    # num_vehicles = 2
-    # weight = [ 0,0.8,0.5,0.5,1.2]
-    # vehicle_weight = [ 20, 20 ]
-    # dimension = [ 0,16,1.02,1.02,0.5 ]
-    # vehicle_dimension = [ 56, 56 ]
+    # coordinates = [[10.0301,105.7706],[10.0633,105.761],[10.063,105.764],[10.0622,105.718],[10.0475,105.787],[10.0659,105.682],[10.0351,105.691],[10.0107,105.739],[10.0663,105.559],[9.97949,105.71],[10.1082,105.62],[9.99753,105.667],[10.0297,105.796],[10.0297,105.796],[10.0297,105.796]]
+    # num_vehicles = 3
     # depot = 0
+    # dimension = [0,0.13,0.73,2.5,0.21,0.13,2.92,0.2,3.25,1,0.13,0.04,12,30,3]
+    # vehicle_dimension = [40,40,40]
     # max_travel = 500
 
     distance_matrix = calculate_distance_matrix(coordinates)
 
-    data = create_data_model(distance_matrix, num_vehicles, weight,
-                             vehicle_weight, dimension, vehicle_dimension, depot, max_travel)
+    data = create_data_model(distance_matrix, num_vehicles, dimension, vehicle_dimension, depot, max_travel)
 
     # Create the routing model.
     len_distance_matrix = len(data['distance_matrix'])
@@ -131,17 +120,6 @@ def main():
                          max_travel, True, 'Distance')
     distance_dimension = routing.GetDimensionOrDie('Distance')
     distance_dimension.SetGlobalSpanCostCoefficient(100)
-
-    # Add Weight constraint.
-    def weight_callback(from_index):
-        from_node = manager.IndexToNode(from_index)
-        return data['weight'][from_node]
-    weight_index = routing.RegisterUnaryTransitCallback(
-        weight_callback)
-    routing.AddDimensionWithVehicleCapacity(
-        weight_index, 0, data['vehicle_weight'], True, 'Weight')
-    # distance_dimension = routing.GetDimensionOrDie('Weight')
-    # distance_dimension.SetGlobalSpanCostCoefficient(100)
 
     # Add Dimension constraint.
     def dimension_callback(from_index):
