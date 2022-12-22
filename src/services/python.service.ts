@@ -5,12 +5,14 @@ import { VrpDto } from 'src/controllers/dto/vrp.dto';
 @Injectable()
 export class PythonService {
   getVehicleRouting(vrpDto: VrpDto, res) {
+    console.log('vrpDto', vrpDto);
     const options: Options = {
       mode: 'json',
-      pythonPath:
-        'C:/Users/User/AppData/Local/Programs/Python/Python39/python.exe',
       // pythonPath:
-      //   'C:/Users/Admin/AppData/Local/Programs/Python/Python39/python.exe',
+      //   'C:/Users/User/AppData/Local/Programs/Python/Python39/python.exe',
+      pythonPath:
+        'C:/Users/Admin/AppData/Local/Programs/Python/Python39/python.exe',
+      // pythonPath: 'C:/Program Files/Python39/python.exe',
       scriptPath: './src/scripts',
       pythonOptions: ['-u'],
       args: [

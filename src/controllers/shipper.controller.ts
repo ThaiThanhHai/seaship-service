@@ -7,6 +7,11 @@ import { Status } from 'src/models/shipper.entity';
 export class ShipperController {
   constructor(private readonly shipperService: ShipperService) {}
 
+  @Get('test')
+  test() {
+    return 'hi';
+  }
+
   @Post('')
   createShipper(@Body() shipperDto: ShipperDto) {
     return this.shipperService.createShipper(shipperDto);

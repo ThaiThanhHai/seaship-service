@@ -37,7 +37,7 @@ import { DashboardService } from './services/dashboard.service';
         password: 'password',
         database: 'seaship_dev',
         entities: [`dist/models/*{.ts,.js}`],
-        synchronize: true,
+        synchronize: false,
       }),
     }),
     HttpModule,

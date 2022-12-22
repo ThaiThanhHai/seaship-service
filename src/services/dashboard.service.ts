@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Delivery } from 'src/models/delivery.entity';
 import { Order } from 'src/models/order.entity';
-import { sum, uniqBy } from 'lodash';
+import { round, sum, uniqBy } from 'lodash';
 import { Shipper } from 'src/models/shipper.entity';
 
 @Injectable()
@@ -72,7 +72,7 @@ export class DashboardService {
     const response = {
       totalOrder: totalOrder,
       totalDistance: distance,
-      totalDimension: dimension,
+      totalDimension: round(dimension, 1),
       totalFee: fee,
       totalOrderSuccess: totalOrderSuccess,
       totalOrderFailure: totalOrderFailure,

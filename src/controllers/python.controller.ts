@@ -7,7 +7,7 @@ import { Res } from '@nestjs/common/decorators/http/route-params.decorator';
 export class PythonController {
   constructor(private readonly pythonService: PythonService) {}
 
-  @Post('')
+  @Post()
   getListOfDeliveryType(@Body() vrpDto: VrpDto, @Res() res) {
     return this.pythonService.getVehicleRouting(vrpDto, res);
   }

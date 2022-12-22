@@ -6,6 +6,7 @@ import numpy as np
 import math
 import haversine
 
+
 class NpEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -42,9 +43,7 @@ def calculate_distance_matrix(coordinates):
     return distance_matrix
 
 
-
-
-def create_data_model(distance_matrix, num_vehicles,dimension, vehicle_dimension, depot, max_travel):
+def create_data_model(distance_matrix, num_vehicles, dimension, vehicle_dimension, depot, max_travel):
     data = {}
     data['distance_matrix'] = distance_matrix
     data['num_vehicles'] = num_vehicles
@@ -76,7 +75,7 @@ def print_solution(data, manager, routing, solution):
         result.append({
             "route": routes,
             "distances": route_distance,
-            "total_distance": round(np.sum(route_distance),2),
+            "total_distance": round(np.sum(route_distance), 2),
             "dimensions": route_dimension,
             "total_dimension": round(np.sum(route_dimension), 2),
         })
@@ -92,16 +91,19 @@ def main():
     vehicle_dimension = json.loads(sys.argv[5])
     max_travel = json.loads(sys.argv[6])
 
-    # coordinates = [[10.0301,105.7706],[10.0633,105.761],[10.063,105.764],[10.0622,105.718],[10.0475,105.787],[10.0659,105.682],[10.0351,105.691],[10.0107,105.739],[10.0663,105.559],[9.97949,105.71],[10.1082,105.62],[9.99753,105.667],[10.0297,105.796],[10.0297,105.796],[10.0297,105.796]]
+    # coordinates = [[10.0301, 105.7706], [10.0633, 105.761], [10.063, 105.764], [10.0622, 105.718], [10.0475, 105.787], [10.0659, 105.682], [10.0351, 105.691], [
+    #     10.0107, 105.739], [10.0663, 105.559], [9.97949, 105.71], [10.1082, 105.62], [9.99753, 105.667], [10.0297, 105.796], [10.0297, 105.796], [10.0297, 105.796]]
     # num_vehicles = 3
     # depot = 0
-    # dimension = [0,0.13,0.73,2.5,0.21,0.13,2.92,0.2,3.25,1,0.13,0.04,12,30,3]
-    # vehicle_dimension = [40,40,40]
+    # dimension = [0, 0.13, 0.73, 2.5, 0.21, 0.13,
+    #              2.92, 0.2, 3.25, 1, 0.13, 0.04, 12, 30, 3]
+    # vehicle_dimension = [40, 40, 40]
     # max_travel = 500
 
     distance_matrix = calculate_distance_matrix(coordinates)
 
-    data = create_data_model(distance_matrix, num_vehicles, dimension, vehicle_dimension, depot, max_travel)
+    data = create_data_model(
+        distance_matrix, num_vehicles, dimension, vehicle_dimension, depot, max_travel)
 
     # Create the routing model.
     len_distance_matrix = len(data['distance_matrix'])

@@ -3,14 +3,14 @@ import { Order } from '../models/order.entity';
 import { DataSource, In } from 'typeorm';
 import { DeliveryDto } from '../controllers/dto/delivery.dto';
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios/dist';
+import { HttpService } from '@nestjs/axios';
 import { Shipper } from 'src/models/shipper.entity';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { lastValueFrom, map } from 'rxjs';
 import { Delivery } from 'src/models/delivery.entity';
 import { Status } from 'src/models/order.entity';
 import { Status as ShipperStatus } from 'src/models/shipper.entity';
-import { sum } from 'lodash';
+import { round, sum } from 'lodash';
 
 @Injectable()
 export class DeliveryService {
@@ -67,7 +67,7 @@ export class DeliveryService {
         name: data.name,
         totalFee: totalFee,
         maxWeight: data.vehicle.capacity,
-        totalDimension: totalDimension[0],
+        totalDimension: round(sum(totalDimension), 2),
         maxDimension: data.vehicle.dimension,
         totalDistance: totalDistance[0],
         count: count,
@@ -311,6 +311,14 @@ export class DeliveryService {
       },
     };
     const url = 'http://localhost:3000/api/v1/python';
+    console.log({
+      coordinates,
+      num_vehicles,
+      dimension,
+      vehicle_dimension,
+      depot,
+      max_travel,
+    });
     const media = this.httpService.post(
       url,
       {
